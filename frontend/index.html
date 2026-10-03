@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetTutorIA - Laboratorio Inteligente de Redes y Tutor Socrático</title>
+  <meta name="description" content="Laboratorio inteligente y tutor virtual para Cisco Packet Tracer con diagnóstico determinista y retroalimentación pedagógica adaptativa.">
+  
+  <!-- Tipografía moderna Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegación Superior -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1 class="brand-title">NetTutorIA</h1>
+      </div>
+      <span class="badge-tag">AI Lab Tutor</span>
+    </div>
+
+    <div class="nav-controls">
+      <!-- Selector de Laboratorio -->
+      <select id="select-lab" class="select-lab" title="Seleccionar Práctica">
+        <option value="lab1_intervlan">Práctica 1: Inter-VLAN Routing</option>
+      </select>
+
+      <!-- Estado de Packet Tracer IPC -->
+      <div id="pt-status-pill" class="pt-status-pill" title="Estado de conexión con Cisco Packet Tracer">
+        <span id="pt-status-dot" class="status-dot"></span>
+        <span id="pt-status-text">PT No Detectado</span>
+      </div>
+
+      <!-- Acciones Rápidas -->
+      <button id="btn-open-import" class="btn btn-secondary">
+        📋 Importar Config
+      </button>
+
+      <button id="btn-run-diagnostics" class="btn btn-primary">
+        🔍 Re-analizar Red
+      </button>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal de la App -->
+  <main class="main-container">
+
+    <!-- Sección Izquierda: Topología y Lienzo Interactivo -->
+    <section class="topology-section">
+      <div class="topology-header">
+        <div class="topology-title-box">
+          <h2 id="lab-title">Cargando práctica...</h2>
+          <p id="lab-desc">Topología activa de red</p>
+        </div>
+
+        <div class="score-badge">
+          <div class="score-circle" id="score-value">--%</div>
+          <div class="score-meta">
+            <div>Consistencia de Red</div>
+            <div id="issues-summary" style="color: var(--accent-amber);">Calculando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lienzo SVG Interactivo -->
+      <div class="canvas-wrapper">
+        <svg id="topology-svg"></svg>
+
+        <!-- Panel Desplegable de Inspección de Dispositivo -->
+        <div id="device-inspect-panel" class="device-inspect-panel">
+          <div class="inspect-header">
+            <div class="inspect-title">
+              <span>🔍 Dispositivo:</span>
+              <span id="inspect-device-name">Router1</span>
+            </div>
+            <button id="btn-close-inspect" class="btn-close-inspect">&times;</button>
+          </div>
+          <table class="inspect-table">
+            <thead>
+              <tr>
+                <th>Interfaz</th>
+                <th>IP / Máscara</th>
+                <th>Modo / VLAN</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="inspect-table-body">
+              <!-- Rellenado dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección Derecha: Tutor Socrático y Diagnóstico Técnico -->
+    <aside class="sidebar-panel">
+      <!-- Pestañas del Panel -->
+      <nav class="sidebar-tabs">
+        <button class="tab-btn active" data-tab="tutor">
+          💡 NetTutor IA
+        </button>
+        <button class="tab-btn" data-tab="diagnostics">
+          ⚠️ Diagnóstico <span id="diag-tab-badge" class="badge-tag" style="margin-left: 4px;">0</span>
+        </button>
+      </nav>
+
+      <!-- Pestaña 1: Tutor Socrático (Chat & Pistas Progresivas) -->
+      <div id="tab-tutor" class="tab-content active">
+        <div class="chat-container">
+          <!-- Historial de Conversación -->
+          <div id="chat-messages" class="chat-messages"></div>
+
+          <!-- Selector de Nivel de Pista Socrática -->
+          <div class="hint-level-bar">
+            <span class="hint-label">Nivel de Pista:</span>
+            <div class="hint-buttons">
+              <button class="btn-hint active" data-level="1" title="Pregunta conceptual para pensar">
+                💡 N1: Conceptual
+              </button>
+              <button class="btn-hint" data-level="2" title="Indica qué equipo e interfaz revisar">
+                🔍 N2: Clave
+              </button>
+              <button class="btn-hint" data-level="3" title="Solución completa y comandos IOS">
+                🛠️ N3: Solución
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra de Entrada de Mensaje -->
+          <div class="chat-input-bar">
+            <input 
+              type="text" 
+              id="chat-input" 
+              class="chat-input" 
+              placeholder="Hazle una pregunta a NetTutor sobre tu red..."
+              autocomplete="off"
+            />
+            <button id="btn-send-chat" class="btn btn-primary" style="padding: 10px 16px;">
+              Enviar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestaña 2: Lista de Diagnósticos Técnicos -->
+      <div id="tab-diagnostics" class="tab-content">
+        <div id="diagnostics-container" class="diagnostics-container">
+          <!-- Tarjetas de hallazgos renderizadas dinámicamente -->
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Modal para Importar Running Config de Cisco -->
+  <div id="modal-import" class="modal-overlay">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="color: var(--text-primary);">Pegar Configuración Cisco IOS</h3>
+        <button id="btn-close-import" class="btn-close-inspect" style="font-size: 1.5rem;">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        Pega el resultado del comando <code>show running-config</code> de cualquier Switch o Router. NetTutorIA extraerá interfaces, subredes, VLANs y puertos troncales automáticamente.
+      </p>
+      <textarea 
+        id="import-config-text" 
+        class="modal-textarea" 
+        placeholder="hostname S1&#10;interface FastEthernet0/1&#10; switchport mode access&#10;!&#10;interface FastEthernet0/10&#10; switchport access vlan 10&#10;!"
+      ></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="btn-submit-import" class="btn btn-primary">
+          Analizar e Integrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
