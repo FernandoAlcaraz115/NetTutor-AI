@@ -10,12 +10,15 @@ def check_gateway_rules(topology: Topology) -> List[DiagnosticFinding]:
     findings: List[DiagnosticFinding] = []
 
     # Recolectar todas las IPs de routers activas en la topología
+    routers = [d for d in topology.devices if d.type == DeviceType.ROUTER]
+    has_routers = len(routers) > 0
     router_ips: Set[str] = set()
-    for dev in topology.devices:
-        if dev.type == DeviceType.ROUTER:
-            for iface in dev.interfaces:
-                if iface.ip_address and iface.ip_address != "unassigned":
-                    router_ips.add(iface.ip_address)
+    for dev in routers:
+        for iface in dev.interfaces:
+            if iface.ip_address and iface.ip_address != "unassigned":
+                router_ips.add(iface.ip_address)
+
+    hosts_with_unreachable_gw = []
 
     for dev in topology.devices:
         if dev.type in [DeviceType.PC, DeviceType.SERVER]:
@@ -39,24 +42,25 @@ def check_gateway_rules(topology: Topology) -> List[DiagnosticFinding]:
                 )
                 continue
 
-            # Verificar si falta el gateway
+            # Verificar si falta el gateway (solo exigible si hay routers en la topología)
             if not dev.default_gateway:
-                findings.append(
-                    DiagnosticFinding(
-                        id=f"gw_missing_{dev.id}",
-                        rule_id="RULE_L3_MISSING_DEFAULT_GATEWAY",
-                        severity=DiagnosticSeverity.WARNING,
-                        layer="L3",
-                        device_id=dev.id,
-                        device_name=dev.name,
-                        interface_name=main_if.name,
-                        title=f"Puerta de enlace ausente en {dev.name}",
-                        description=f"{dev.name} tiene IP ({main_if.ip_address}) pero no tiene configurado un Default Gateway.",
-                        hint_level1="¿Qué necesita un host para enviar paquetes a dispositivos que están fuera de su propia red local?",
-                        hint_level2=f"Revisa la casilla 'Default Gateway' en la configuración de {dev.name}.",
-                        technical_solution="Configura la IP del router más cercano (interfaz local o subinterfaz de su VLAN) como Default Gateway."
+                if has_routers:
+                    findings.append(
+                        DiagnosticFinding(
+                            id=f"gw_missing_{dev.id}",
+                            rule_id="RULE_L3_MISSING_DEFAULT_GATEWAY",
+                            severity=DiagnosticSeverity.WARNING,
+                            layer="L3",
+                            device_id=dev.id,
+                            device_name=dev.name,
+                            interface_name=main_if.name,
+                            title=f"Puerta de enlace ausente en {dev.name}",
+                            description=f"{dev.name} tiene IP ({main_if.ip_address}) pero no tiene configurado un Default Gateway.",
+                            hint_level1="¿Qué necesita un host para enviar paquetes a dispositivos que están fuera de su propia red local?",
+                            hint_level2=f"Revisa la casilla 'Default Gateway' en la configuración de {dev.name}.",
+                            technical_solution="Configura la IP del router más cercano (interfaz local o subinterfaz de su VLAN) como Default Gateway."
+                        )
                     )
-                )
                 continue
 
             # Verificar si el default gateway está en la misma subred del host
@@ -88,7 +92,7 @@ def check_gateway_rules(topology: Topology) -> List[DiagnosticFinding]:
                                 technical_solution=f"Cambia el Default Gateway de {dev.name} por la IP del router en la subred {host_net}."
                             )
                         )
-                    elif router_ips and dev.default_gateway not in router_ips:
+                    elif has_routers and router_ips and dev.default_gateway not in router_ips:
                         findings.append(
                             DiagnosticFinding(
                                 id=f"gw_unreachable_ip_{dev.id}",
@@ -108,7 +112,33 @@ def check_gateway_rules(topology: Topology) -> List[DiagnosticFinding]:
                                 technical_solution=f"Asegúrate de que la interfaz/subinterfaz del router tenga exactamente la IP {dev.default_gateway}."
                             )
                         )
+                    elif not has_routers:
+                        hosts_with_unreachable_gw.append((dev, dev.default_gateway))
                 except ValueError:
                     pass
+
+    # Si los hosts tienen Default Gateway configurado hacia distintas subredes pero no hay Router ni Switch L3
+    if not has_routers and hosts_with_unreachable_gw:
+        sample_dev, _ = hosts_with_unreachable_gw[0]
+        gws = sorted({gw for _, gw in hosts_with_unreachable_gw})
+        findings.append(
+            DiagnosticFinding(
+                id="l3_no_router_for_gateways",
+                rule_id="RULE_L3_INTERVLAN_ROUTER_MISSING",
+                severity=DiagnosticSeverity.WARNING,
+                layer="L3",
+                device_id=sample_dev.id,
+                device_name=sample_dev.name,
+                title="Gateways configurados sin equipo de Capa 3 (Router) en la topología",
+                description=(
+                    f"{len(hosts_with_unreachable_gw)} equipos tienen puertas de enlace configuradas ({', '.join(gws)}), "
+                    f"pero la topología solo cuenta con switches de Capa 2. Habrá conectividad dentro de cada VLAN, "
+                    f"pero no enrutamiento Inter-VLAN."
+                ),
+                hint_level1="¿Pueden comunicarse dos PCs que pertenecen a diferentes VLANs y subredes si solo hay switches de Capa 2 en la red?",
+                hint_level2=f"Los hosts apuntan a los gateways {', '.join(gws)}, pero no existe ningún Router conectado que posea esas direcciones IP.",
+                technical_solution="Para comunicar las VLANs entre sí, agrega un Router (Router-on-a-stick) con subinterfaces 802.1Q para cada gateway."
+            )
+        )
 
     return findings

@@ -80,21 +80,79 @@ class NetTutorApp {
       try {
         await ApiClient.loadPreset(presetId);
         await this.loadApp();
+        this.announceLoadedLab();
       } catch (err) {
         alert('Error al cargar la práctica: ' + err.message);
       }
     });
+
+    // Subir archivo .PKT directo desde la computadora
+    const fileInput = document.getElementById('input-upload-pkt');
+    document.getElementById('btn-upload-pkt').addEventListener('click', () => {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.handleUploadPkt(file);
+      }
+      fileInput.value = '';
+    });
   }
 
   async start() {
+    await this.loadPresetsList();
     await this.loadApp();
     this.checkPacketTracer();
     // Bienvenida del Tutor
+    this.tutorWelcome();
+  }
+
+  async loadPresetsList() {
+    try {
+      const presets = await ApiClient.getPresets();
+      const selectEl = document.getElementById('select-lab');
+      selectEl.innerHTML = '';
+      presets.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        selectEl.appendChild(opt);
+      });
+    } catch (e) {
+      console.error('Error cargando lista de prácticas:', e);
+    }
+  }
+
+  tutorWelcome() {
     this.tutorChat.addTutorMessage(
       "👋 ¡Hola! Soy **NetTutor**, tu asistente inteligente para prácticas de redes.\n\n" +
-      "He cargado la práctica de **Inter-VLAN Routing**. En esta topología, PC1 (VLAN 10) y PC2 (VLAN 20) deberían poder comunicarse a través del Router R1.\n\n" +
-      "🔍 Ya analicé la red y detecté algunos problemas que impiden la conectividad. ¿En qué te puedo ayudar o prefieres que revisemos el primer hallazgo?"
+      "Puedes seleccionar cualquiera de tus archivos `.pkt` de **BANCO DE PRACTICAS** en el menú superior o subir un `.pkt` con el botón **📂 Subir .PKT**.\n\n" +
+      "🔍 Ya analicé la topología activa. ¿En qué te puedo ayudar o prefieres que revisemos el primer hallazgo?"
     );
+  }
+
+  announceLoadedLab() {
+    if (!this.currentTopology || !this.currentReport) return;
+    const issues = this.currentReport.total_issues;
+    const msg = issues > 0
+      ? `📂 He desencriptado y cargado **${this.currentTopology.name}** (${this.currentTopology.devices.length} equipos, ${this.currentTopology.links.length} enlaces).\n\n⚠️ Detecté **${issues} hallazgo(s)** en la red (Consistencia: **${this.currentReport.score_percentage}%**). Haz clic en *Consultar pista socrática* en la pestaña de Diagnóstico o pregúntame aquí.`
+      : `📂 He desencriptado y cargado **${this.currentTopology.name}** (${this.currentTopology.devices.length} equipos, ${this.currentTopology.links.length} enlaces).\n\n✅ ¡La configuración actual tiene **100% de consistencia** en las reglas evaluadas!`;
+    this.tutorChat.addTutorMessage(msg);
+  }
+
+  async handleUploadPkt(file) {
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        await ApiClient.uploadPktFile(file.name, ev.target.result);
+        await this.loadApp();
+        this.announceLoadedLab();
+      } catch (err) {
+        alert('Error al procesar el archivo .pkt: ' + err.message);
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   async loadApp() {
@@ -145,9 +203,15 @@ class NetTutorApp {
     dev.interfaces.forEach(iface => {
       const tr = document.createElement('tr');
       const ipText = iface.ip_address ? `${iface.ip_address} / ${iface.subnet_mask || ''}` : 'Sin asignar';
-      const modeText = iface.encapsulation_dot1q 
-        ? `dot1q (VLAN ${iface.encapsulation_dot1q})` 
-        : (iface.switchport_mode !== 'none' ? `${iface.switchport_mode} (VLAN ${iface.access_vlan || 1})` : '-');
+      let modeText = '-';
+      if (iface.encapsulation_dot1q) {
+        modeText = `dot1q (VLAN ${iface.encapsulation_dot1q})`;
+      } else if (iface.switchport_mode === 'trunk') {
+        const allowed = iface.trunk_allowed_vlans ? ` [Allowed: ${iface.trunk_allowed_vlans.join(',')}]` : '';
+        modeText = `trunk (Native ${iface.native_vlan || 1})${allowed}`;
+      } else if (iface.switchport_mode !== 'none') {
+        modeText = `${iface.switchport_mode} (VLAN ${iface.access_vlan || 1})`;
+      }
 
       tr.innerHTML = `
         <td style="color: var(--text-primary); font-weight: 600;">${iface.name}</td>

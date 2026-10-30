@@ -40,9 +40,31 @@ export const ApiClient = {
     }
   },
 
+  async getPresets() {
+    const res = await fetch(`${API_BASE}/topology/presets`);
+    if (!res.ok) throw new Error('Error al obtener catálogo de prácticas');
+    return await res.json();
+  },
+
   async loadPreset(presetId) {
-    const res = await fetch(`${API_BASE}/topology/presets/${presetId}/load`, { method: 'POST' });
-    if (!res.ok) throw new Error('Error al cargar la práctica');
+    const res = await fetch(`${API_BASE}/topology/presets/${encodeURIComponent(presetId)}/load`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Error al cargar la práctica');
+    }
+    return await res.json();
+  },
+
+  async uploadPktFile(filename, contentBase64) {
+    const res = await fetch(`${API_BASE}/topology/upload-pkt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, content_base64: contentBase64 })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Error al desencriptar el archivo .pkt');
+    }
     return await res.json();
   },
 

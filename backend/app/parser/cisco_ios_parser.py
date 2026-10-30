@@ -105,6 +105,27 @@ class CiscoIOSParser:
                     if current_iface["switchport_mode"] == SwitchportMode.NONE:
                         current_iface["switchport_mode"] = SwitchportMode.ACCESS
 
+                # Trunk Native VLAN
+                native_vlan_match = re.search(r"switchport\s+trunk\s+native\s+vlan\s+(\d+)", line, re.IGNORECASE)
+                if native_vlan_match:
+                    current_iface["native_vlan"] = int(native_vlan_match.group(1))
+
+                # Trunk Allowed VLANs (e.g. switchport trunk allowed vlan 1,10,99 or 10-20)
+                allowed_vlan_match = re.search(r"switchport\s+trunk\s+allowed\s+vlan\s+([0-9,\-]+)", line, re.IGNORECASE)
+                if allowed_vlan_match:
+                    vlan_spec = allowed_vlan_match.group(1)
+                    allowed_list: List[int] = []
+                    for part in vlan_spec.split(","):
+                        part = part.strip()
+                        if "-" in part:
+                            start_v, end_v = part.split("-", 1)
+                            if start_v.isdigit() and end_v.isdigit():
+                                allowed_list.extend(range(int(start_v), int(end_v) + 1))
+                        elif part.isdigit():
+                            allowed_list.append(int(part))
+                    if allowed_list:
+                        current_iface["trunk_allowed_vlans"] = sorted(set(allowed_list))
+
                 # Encapsulation dot1Q (Router subinterface: encapsulation dot1Q 10)
                 dot1q_match = re.search(r"encapsulation\s+dot1q\s+(\d+)", line, re.IGNORECASE)
                 if dot1q_match:

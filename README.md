@@ -33,7 +33,10 @@ NetTutorIA/
 │   │   │   │   ├── gateway_rules.py
 │   │   │   │   └── interface_status_rules.py
 │   │   │   └── rule_engine.py       # Orquestador del análisis de red
-│   │   ├── parser/                  # Parser de Cisco IOS running-config
+│   │   ├── parser/                  # Decodificador .pkt (Twofish-EAX) y Parser Cisco IOS
+│   │   │   ├── pkt_decoder.py       # Desencriptador binario .pkt/.pka (XOR + Twofish-EAX + zlib)
+│   │   │   ├── pkt_parser.py        # Extractor de topología XML de Packet Tracer
+│   │   │   └── cisco_ios_parser.py  # Parser de running-config Cisco IOS
 │   │   ├── tutor/                   # Servicio de IA con Gemini + fallback heurístico
 │   │   ├── sample_labs/             # Laboratorios piloto predefinidos
 │   │   └── main.py                  # Entrypoint de FastAPI y montaje estático
@@ -87,5 +90,8 @@ Documentación interactiva de la API:
 
 ## 🔌 Integración con Cisco Packet Tracer
 
-1. **Vía IPC en vivo:** En Packet Tracer, activa el servicio en `Extensions > IPC` (puerto por defecto `39000`). NetTutorIA detectará el servicio automáticamente.
-2. **Vía `show running-config`:** Haz clic en el botón **"📋 Importar Config"** en la barra superior para pegar la configuración de cualquier switch o router. NetTutorIA parseará las interfaces, subredes, VLANs y enlaces al instante.
+1. **Carga directa de archivos `.pkt` (Ingeniería Inversa Twofish-EAX):**
+   - Coloca tus archivos `.pkt` en la carpeta `BANCO DE PRACTICAS/` para que aparezcan automáticamente en el selector superior, o usa el botón **"📂 Subir .PKT"** desde el navegador.
+   - NetTutorIA desencripta el archivo binario `.pkt` en memoria (Desofuscación XOR + Twofish-128 EAX con llave `0x89*16` + `zlib`) y reconstruye la topología, enlaces, IPs, VLANs y `running-config`.
+2. **Vía IPC en vivo:** En Packet Tracer, activa el servicio en `Extensions > IPC` (puerto por defecto `39000`). NetTutorIA detectará el servicio automáticamente.
+3. **Vía `show running-config`:** Haz clic en el botón **"📋 Importar Config"** en la barra superior para pegar la configuración de cualquier switch o router. NetTutorIA parseará las interfaces, subredes, VLANs y enlaces al instante.

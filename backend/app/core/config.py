@@ -20,8 +20,9 @@ class Settings:
     PT_IPC_HOST: str = os.getenv("PT_IPC_HOST", "127.0.0.1")
     PT_IPC_PORT: int = int(os.getenv("PT_IPC_PORT", "39000"))
     
-    # Carpetas estáticas
+    # Carpetas estáticas y banco de prácticas .pkt
     ROOT_DIR: Path = ROOT_DIR
     FRONTEND_DIR: Path = ROOT_DIR / "frontend"
+    PRACTICES_DIR: Path = ROOT_DIR / "BANCO DE PRACTICAS"
 
 settings = Settings()
