@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.core.models import TutorChatRequest, TutorChatResponse
 from app.tutor.ai_tutor_service import ai_tutor_service
 from app.engine.rule_engine import rule_engine
-from app.api.routes_topology import current_topology
+from app.api.routes_topology import get_current_topology
 
 router = APIRouter(prefix="/tutor", tags=["Tutor"])
 
@@ -14,6 +14,7 @@ def tutor_chat(request: TutorChatRequest):
     o resolver dudas del estudiante sobre su práctica.
     """
     # Ejecutar diagnóstico fresco sobre la topología actual
-    report = rule_engine.analyze(current_topology)
-    response = ai_tutor_service.generate_response(request, current_topology, report)
+    curr_topo = get_current_topology()
+    report = rule_engine.analyze(curr_topo)
+    response = ai_tutor_service.generate_response(request, curr_topo, report)
     return response

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.core.models import DiagnosticReport
 from app.engine.rule_engine import rule_engine
-from app.api.routes_topology import current_topology
+from app.api.routes_topology import get_current_topology
 
 router = APIRouter(prefix="/diagnostics", tags=["Diagnostics"])
 
@@ -12,5 +12,5 @@ def run_diagnostics():
     Ejecuta el motor de reglas determinista de NetTutorIA sobre la topología
     actual y entrega el informe de inconsistencias y fallas encontradas.
     """
-    report = rule_engine.analyze(current_topology)
+    report = rule_engine.analyze(get_current_topology())
     return report

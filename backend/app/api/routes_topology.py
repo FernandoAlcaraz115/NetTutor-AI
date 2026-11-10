@@ -14,18 +14,28 @@ router = APIRouter(prefix="/topology", tags=["Topology"])
 current_topology: Topology = get_sample_intervlan_lab()
 
 
-@router.get("", response_model=Topology)
-def get_current_topology():
+def get_current_topology() -> Topology:
     """Obtiene la topología de red actualmente cargada en el tutor."""
     return current_topology
+
+
+def set_current_topology(topology: Topology) -> Topology:
+    """Actualiza la topología activa en memoria."""
+    global current_topology
+    current_topology = topology
+    return current_topology
+
+
+@router.get("", response_model=Topology)
+def get_topology_endpoint():
+    """Obtiene la topología de red actualmente cargada en el tutor."""
+    return get_current_topology()
 
 
 @router.post("", response_model=Topology)
 def update_topology(topology: Topology):
     """Actualiza la topología completa."""
-    global current_topology
-    current_topology = topology
-    return current_topology
+    return set_current_topology(topology)
 
 
 @router.get("/presets")
@@ -67,8 +77,7 @@ def load_preset(preset_id: str):
     preset_id = urllib.parse.unquote(preset_id)
 
     if preset_id == "lab1_intervlan":
-        current_topology = get_sample_intervlan_lab()
-        return current_topology
+        return set_current_topology(get_sample_intervlan_lab())
 
     if preset_id.startswith("pkt:"):
         filename = preset_id.split("pkt:", 1)[1].strip()
@@ -76,8 +85,7 @@ def load_preset(preset_id: str):
         if not pkt_path.exists():
             raise HTTPException(status_code=404, detail=f"Archivo '{filename}' no encontrado en BANCO DE PRACTICAS")
         try:
-            current_topology = PktParser.parse_file(pkt_path)
-            return current_topology
+            return set_current_topology(PktParser.parse_file(pkt_path))
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error al desencriptar/parsear '{filename}': {e}")
 
@@ -107,9 +115,8 @@ def upload_pkt_file(payload: Dict[str, str]):
 
     try:
         raw_bytes = base64.b64decode(b64_data)
-        global current_topology
-        current_topology = PktParser.parse_bytes(raw_bytes, filename=filename)
-        return current_topology
+        parsed_topo = PktParser.parse_bytes(raw_bytes, filename=filename)
+        return set_current_topology(parsed_topo)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"No se pudo desencriptar el archivo .pkt: {e}")
 
