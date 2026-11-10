@@ -179,3 +179,4 @@ def check_ospf_dhcp_rules(topology: Topology) -> List[DiagnosticFinding]:
                 pass
 
     return findings
+

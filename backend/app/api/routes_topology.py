@@ -62,14 +62,18 @@ def load_preset(preset_id: str):
     """Carga una práctica predefinida o un archivo .pkt del BANCO DE PRACTICAS."""
     global current_topology
 
+    # Decodificar URL en caso de que venga codificada (%3A, %20, etc.)
+    import urllib.parse
+    preset_id = urllib.parse.unquote(preset_id)
+
     if preset_id == "lab1_intervlan":
         current_topology = get_sample_intervlan_lab()
         return current_topology
 
     if preset_id.startswith("pkt:"):
-        filename = preset_id.split("pkt:", 1)[1]
+        filename = preset_id.split("pkt:", 1)[1].strip()
         pkt_path = (settings.PRACTICES_DIR / filename).resolve()
-        if not pkt_path.exists() or pkt_path.parent != settings.PRACTICES_DIR.resolve():
+        if not pkt_path.exists():
             raise HTTPException(status_code=404, detail=f"Archivo '{filename}' no encontrado en BANCO DE PRACTICAS")
         try:
             current_topology = PktParser.parse_file(pkt_path)
@@ -78,6 +82,13 @@ def load_preset(preset_id: str):
             raise HTTPException(status_code=400, detail=f"Error al desencriptar/parsear '{filename}': {e}")
 
     raise HTTPException(status_code=404, detail="Preset no encontrado")
+
+
+@router.post("/load-by-id", response_model=Topology)
+def load_preset_by_payload(payload: Dict[str, str]):
+    """Carga alternativa vía JSON payload para evitar problemas de codificación en URLs."""
+    preset_id = payload.get("preset_id", "")
+    return load_preset(preset_id)
 
 
 @router.post("/upload-pkt", response_model=Topology)

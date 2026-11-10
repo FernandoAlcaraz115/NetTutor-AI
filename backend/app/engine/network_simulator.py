@@ -289,3 +289,4 @@ class NetworkSimulator:
             if i.status == InterfaceStatus.UP:
                 return i.name
         return dev.interfaces[0].name if dev.interfaces else "Fa0"
+

@@ -263,3 +263,4 @@ class CiscoIOSEmulator:
 
         lines.append("end")
         return "\n".join(lines)
+

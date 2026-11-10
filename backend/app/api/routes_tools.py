@@ -44,3 +44,4 @@ def execute_cli_command(req: CommandExecutionRequest):
 
     resp = CiscoIOSEmulator.execute(dev, req)
     return resp
+

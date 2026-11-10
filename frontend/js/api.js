@@ -47,7 +47,11 @@ export const ApiClient = {
   },
 
   async loadPreset(presetId) {
-    const res = await fetch(`${API_BASE}/topology/presets/${encodeURIComponent(presetId)}/load`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/topology/load-by-id`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preset_id: presetId })
+    });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || 'Error al cargar la práctica');

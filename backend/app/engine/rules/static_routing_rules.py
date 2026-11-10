@@ -155,3 +155,4 @@ def check_static_routing_rules(topology: Topology) -> List[DiagnosticFinding]:
                                 )
 
     return findings
+

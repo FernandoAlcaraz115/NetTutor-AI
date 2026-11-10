@@ -89,9 +89,14 @@ class NetTutorApp {
     // Selector de Prácticas
     document.getElementById('select-lab').addEventListener('change', async (e) => {
       const presetId = e.target.value;
+      if (!presetId) return;
       try {
-        await ApiClient.loadPreset(presetId);
-        await this.loadApp();
+        const loadedTopo = await ApiClient.loadPreset(presetId);
+        this.currentTopology = loadedTopo;
+        this.labTitle.textContent = loadedTopo.name;
+        this.labDesc.textContent = loadedTopo.description || 'Topología activa de red';
+        await this.refreshDiagnostics();
+        this.populateToolSelectors();
         this.announceLoadedLab();
       } catch (err) {
         alert('Error al cargar la práctica: ' + err.message);
@@ -578,8 +583,12 @@ class NetTutorApp {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
-        await ApiClient.uploadPktFile(file.name, ev.target.result);
-        await this.loadApp();
+        const loadedTopo = await ApiClient.uploadPktFile(file.name, ev.target.result);
+        this.currentTopology = loadedTopo;
+        this.labTitle.textContent = loadedTopo.name;
+        this.labDesc.textContent = loadedTopo.description || 'Topología activa de red';
+        await this.refreshDiagnostics();
+        this.populateToolSelectors();
         this.announceLoadedLab();
       } catch (err) {
         alert('Error al procesar el archivo .pkt: ' + err.message);
