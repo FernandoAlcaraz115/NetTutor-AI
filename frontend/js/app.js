@@ -95,6 +95,7 @@ class NetTutorApp {
         this.currentTopology = loadedTopo;
         this.labTitle.textContent = loadedTopo.name;
         this.labDesc.textContent = loadedTopo.description || 'Topología activa de red';
+        this.topologyViewer.resetView();
         await this.refreshDiagnostics();
         this.populateToolSelectors();
         this.announceLoadedLab();
@@ -587,6 +588,7 @@ class NetTutorApp {
         this.currentTopology = loadedTopo;
         this.labTitle.textContent = loadedTopo.name;
         this.labDesc.textContent = loadedTopo.description || 'Topología activa de red';
+        this.topologyViewer.resetView();
         await this.refreshDiagnostics();
         this.populateToolSelectors();
         this.announceLoadedLab();
