@@ -9,6 +9,7 @@ from app.api.routes_topology import router as topology_router
 from app.api.routes_diagnostics import router as diagnostics_router
 from app.api.routes_tutor import router as tutor_router
 from app.api.routes_packet_tracer import router as pt_router
+from app.api.routes_tools import router as tools_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -30,6 +31,7 @@ app.include_router(topology_router, prefix=settings.API_PREFIX)
 app.include_router(diagnostics_router, prefix=settings.API_PREFIX)
 app.include_router(tutor_router, prefix=settings.API_PREFIX)
 app.include_router(pt_router, prefix=settings.API_PREFIX)
+app.include_router(tools_router, prefix=settings.API_PREFIX)
 
 # Montar frontend estático si existe
 frontend_path = settings.FRONTEND_DIR

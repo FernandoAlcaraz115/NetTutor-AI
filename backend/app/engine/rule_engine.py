@@ -4,6 +4,8 @@ from app.engine.rules.vlan_trunk_rules import check_vlan_trunk_rules
 from app.engine.rules.ip_subnet_rules import check_ip_subnet_rules
 from app.engine.rules.gateway_rules import check_gateway_rules
 from app.engine.rules.interface_status_rules import check_interface_status_rules
+from app.engine.rules.static_routing_rules import check_static_routing_rules
+from app.engine.rules.ospf_dhcp_rules import check_ospf_dhcp_rules
 
 class NetworkRuleEngine:
     """
@@ -17,6 +19,8 @@ class NetworkRuleEngine:
             check_vlan_trunk_rules,
             check_ip_subnet_rules,
             check_gateway_rules,
+            check_static_routing_rules,
+            check_ospf_dhcp_rules,
         ]
 
     def analyze(self, topology: Topology) -> DiagnosticReport:

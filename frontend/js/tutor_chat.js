@@ -1,5 +1,6 @@
 /**
  * Componente del Chat Socrático del Tutor Inteligente (NetTutor)
+ * Estilo Enterprise SaaS / Asistente Técnico
  */
 import { ApiClient } from './api.js';
 
@@ -42,8 +43,8 @@ export class TutorChat {
 
   setSelectedFinding(finding) {
     this.selectedFinding = finding;
-    this.addSystemMessage(`Enfocando tutoría en: **${finding.title}** (${finding.device_name})`);
-    this.triggerTutorQuery(`¿Me puedes dar una pista sobre el problema en ${finding.device_name}?`);
+    this.addSystemMessage(`Enfocando tutoría en: <strong>${this.escapeHtml(finding.title)}</strong> (${this.escapeHtml(finding.device_name)})`);
+    this.triggerTutorQuery(`¿Me puedes orientar sobre el problema detectado en ${finding.device_name}?`);
   }
 
   async triggerTutorQuery(userPrompt) {
@@ -80,7 +81,7 @@ export class TutorChat {
       }
     } catch (e) {
       this.removeMessage(loadingId);
-      this.addTutorMessage("⚠️ Hubo un inconveniente al consultar al tutor. Asegúrate de que el backend de NetTutorIA esté corriendo.");
+      this.addTutorMessage("⚠️ No fue posible conectar con el servicio de tutoría. Verifica que el servidor backend de NetTutorIA esté en ejecución.");
     }
   }
 
@@ -102,13 +103,10 @@ export class TutorChat {
     this.scrollToBottom();
   }
 
-  addSystemMessage(text) {
+  addSystemMessage(htmlText) {
     const div = document.createElement('div');
-    div.style.fontSize = '0.75rem';
-    div.style.color = 'var(--accent-cyan)';
-    div.style.textAlign = 'center';
-    div.style.margin = '4px 0';
-    div.innerHTML = this.renderMarkdown(text);
+    div.className = 'chat-system-tag';
+    div.innerHTML = htmlText;
     this.messagesContainer.appendChild(div);
     this.scrollToBottom();
   }
@@ -118,7 +116,7 @@ export class TutorChat {
     const bubble = document.createElement('div');
     bubble.id = id;
     bubble.className = 'chat-bubble tutor';
-    bubble.innerHTML = '<span style="color: var(--text-muted); font-style: italic;">NetTutor analizando la práctica...</span>';
+    bubble.innerHTML = '<span style="color: var(--text-muted); font-size: 0.75rem;">NetTutor analizando contexto...</span>';
     this.messagesContainer.appendChild(bubble);
     this.scrollToBottom();
     return id;
@@ -133,13 +131,18 @@ export class TutorChat {
     this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
   }
 
-  renderMarkdown(text) {
-    let html = text
+  escapeHtml(str) {
+    if (!str) return '';
+    return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
 
-    // Bloques de código con pre y code
+  renderMarkdown(text) {
+    let html = this.escapeHtml(text);
+
+    // Bloques de código ```cisco ... ```
     html = html.replace(/```(?:cisco|bash|plaintext)?\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
     // Código en línea
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');

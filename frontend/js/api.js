@@ -76,5 +76,39 @@ export const ApiClient = {
     });
     if (!res.ok) throw new Error('Error al importar configuración');
     return await res.json();
+  },
+
+  async runPingSimulation(sourceDeviceId, targetDeviceId) {
+    const res = await fetch(`${API_BASE}/tools/ping`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source_device_id: sourceDeviceId,
+        target_device_id: targetDeviceId
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Error al ejecutar simulación de ping');
+    }
+    return await res.json();
+  },
+
+  async executeCliCommand(deviceId, command, currentMode, currentInterface) {
+    const res = await fetch(`${API_BASE}/tools/cli/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        device_id: deviceId,
+        command: command,
+        current_mode: currentMode,
+        current_interface: currentInterface
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Error al ejecutar comando CLI');
+    }
+    return await res.json();
   }
 };
