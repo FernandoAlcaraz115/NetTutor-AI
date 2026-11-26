@@ -16,14 +16,18 @@ class AITutorService:
         self.has_gemini = bool(self.api_key and len(self.api_key.strip()) > 10)
         if self.has_gemini:
             try:
+                model_name = settings.GEMINI_MODEL or "gemini-2.5-flash"
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel(
-                    model_name=settings.GEMINI_MODEL or "gemini-2.5-flash",
+                    model_name=model_name,
                     system_instruction=SYSTEM_SOCRATIC_TUTOR_PROMPT
                 )
+                print(f"[AITutorService] Gemini IA activo con modelo '{model_name}'.")
             except Exception as e:
                 print(f"[AITutorService] Advertencia configurando Gemini: {e}")
                 self.has_gemini = False
+        else:
+            print("[AITutorService] Sin GEMINI_API_KEY válida: usando modo heurístico offline.")
 
     def generate_response(
         self,
@@ -131,14 +135,112 @@ class AITutorService:
         )
 
     def _summarize_topology(self, topology: Topology) -> str:
-        devs = [f"- {d.name} ({d.type.value}): {len(d.interfaces)} interfaces" for d in topology.devices]
-        links = [f"- {l.source_device}:{l.source_interface} <--> {l.target_device}:{l.target_interface}" for l in topology.links]
-        return f"Dispositivos:\n" + "\n".join(devs) + f"\n\nEnlaces:\n" + "\n".join(links)
+        dev_blocks = []
+        for d in topology.devices:
+            header = f"- {d.name} ({d.type.value})"
+            meta = []
+            if d.default_gateway:
+                meta.append(f"GW={d.default_gateway}")
+            if d.vlans:
+                vlans_str = ", ".join(f"{vid}:{vname}" for vid, vname in sorted(d.vlans.items()))
+                meta.append(f"VLANs=[{vlans_str}]")
+            if d.static_routes:
+                routes_str = "; ".join(
+                    f"{r.get('network')}/{r.get('mask')}->{r.get('next_hop')}" for r in d.static_routes
+                )
+                meta.append(f"Rutas=[{routes_str}]")
+            if meta:
+                header += " | " + " | ".join(meta)
+
+            if_lines = []
+            for iface in d.interfaces:
+                parts = [iface.name]
+                if iface.ip_address and iface.ip_address != "unassigned":
+                    parts.append(f"{iface.ip_address}/{iface.subnet_mask or ''}")
+                else:
+                    parts.append("sin-IP")
+                if iface.dhcp_enabled:
+                    parts.append("modo=DHCP")
+                elif d.type.value in ("pc", "server"):
+                    parts.append("modo=Static")
+                if iface.encapsulation_dot1q:
+                    parts.append(f"dot1Q={iface.encapsulation_dot1q}")
+                if iface.switchport_mode.value == "trunk":
+                    t_info = f"trunk(native={iface.native_vlan or 1}"
+                    if iface.trunk_allowed_vlans:
+                        t_info += f",allowed={iface.trunk_allowed_vlans}"
+                    t_info += ")"
+                    parts.append(t_info)
+                elif iface.switchport_mode.value == "access":
+                    parts.append(f"access(vlan={iface.access_vlan or 1})")
+                parts.append(f"estado={iface.status.value}")
+                if_lines.append("    * " + " ".join(parts))
+
+            # Extraer líneas clave de OSPF / DHCP / helper-address del raw_config si existen
+            extra_cfg = []
+            if d.raw_config:
+                for raw_line in d.raw_config.splitlines():
+                    s = raw_line.strip()
+                    sl = s.lower()
+                    if any(
+                        sl.startswith(prefix)
+                        for prefix in (
+                            "router ospf",
+                            "router rip",
+                            "router eigrp",
+                            "network ",
+                            "ip dhcp ",
+                            "default-router ",
+                            "dns-server ",
+                            "ip helper-address ",
+                            "ip nat ",
+                        )
+                    ):
+                        extra_cfg.append("    # " + s)
+
+            block = header
+            if if_lines:
+                block += "\n" + "\n".join(if_lines)
+            if extra_cfg:
+                block += "\n" + "\n".join(extra_cfg[:25])
+            dev_blocks.append(block)
+
+        links = [
+            f"- {l.source_device}:{l.source_interface} <--> {l.target_device}:{l.target_interface} ({l.link_type}, {l.status})"
+            for l in topology.links
+        ]
+        summary = "Dispositivos y configuración actual:\n" + "\n".join(dev_blocks) + "\n\nEnlaces:\n" + "\n".join(links)
+
+        if topology.activity_instructions:
+            instr_text = "\n\n".join(
+                f"[{p.get('title', 'Instrucciones')}]\n{p.get('text', '')}"
+                for p in topology.activity_instructions
+                if p.get("text")
+            ).strip()
+            if instr_text:
+                summary += f"\n\n[INSTRUCCIONES DE LA ACTIVIDAD (.PKA)]\n{instr_text[:5000]}"
+        return summary
 
     def _summarize_findings(self, report: DiagnosticReport, selected: Optional[DiagnosticFinding]) -> str:
+        lines = []
         if selected:
-            return f"Hallazgo enfocado: {selected.title} en {selected.device_name} ({selected.description})"
-        lines = [f"- [{f.severity.value.upper()}] {f.device_name} ({f.interface_name or 'global'}): {f.title} -> {f.description}" for f in report.findings]
-        return "\n".join(lines)
+            lines.append(
+                f"HALLAZGO ENFOCADO: [{selected.severity.value.upper()}] {selected.device_name} "
+                f"({selected.interface_name or 'global'}): {selected.title}\n"
+                f"Detalle: {selected.description}\n"
+                f"Referencia técnica del motor: {selected.technical_solution}"
+            )
+            other = [f for f in report.findings if f.id != selected.id]
+            if other:
+                lines.append("\nOtros hallazgos detectados en la topología:")
+                for f in other[:10]:
+                    lines.append(f"- [{f.severity.value.upper()}] {f.device_name} ({f.interface_name or 'global'}): {f.title}")
+        else:
+            for f in report.findings:
+                lines.append(
+                    f"- [{f.severity.value.upper()}] {f.device_name} ({f.interface_name or 'global'}): "
+                    f"{f.title} -> {f.description}"
+                )
+        return "\n".join(lines) if lines else "No se detectaron hallazgos críticos por reglas deterministas."
 
 ai_tutor_service = AITutorService()

@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NetTutorIA - Laboratorio y Diagnóstico Socrático de Redes</title>
-  <meta name="description" content="Plataforma profesional de diagnóstico determinista y tutoría socrática para Cisco Packet Tracer.">
-  
+  <meta name="description"
+    content="Plataforma profesional de diagnóstico determinista y tutoría socrática para Cisco Packet Tracer.">
+
   <!-- Tipografía Profesional: Inter y JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
 
-  <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.1">
 </head>
+
 <body>
 
   <!-- Barra de Navegación Superior (Clean Enterprise Toolbar) -->
@@ -20,7 +25,8 @@
     <div class="nav-brand">
       <div class="brand-icon-wrapper" aria-hidden="true">
         <!-- Icono vectorial de Red / Topología -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <circle cx="12" cy="5" r="3"></circle>
           <circle cx="5" cy="19" r="3"></circle>
           <circle cx="19" cy="19" r="3"></circle>
@@ -53,7 +59,8 @@
       <!-- Acciones de Carga e Importación -->
       <input type="file" id="input-upload-pkt" accept=".pkt,.pka" style="display: none;" />
       <button id="btn-upload-pkt" class="btn btn-secondary" title="Cargar archivo binario .pkt o .pka">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="17 8 12 3 7 8"></polyline>
           <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -62,7 +69,8 @@
       </button>
 
       <button id="btn-open-import" class="btn btn-secondary" title="Importar configuración Cisco IOS en texto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <polyline points="4 17 10 11 4 5"></polyline>
           <line x1="12" y1="19" x2="20" y2="19"></line>
         </svg>
@@ -70,8 +78,10 @@
       </button>
 
       <!-- Botón Principal: Re-analizar Red -->
-      <button id="btn-run-diagnostics" class="btn btn-primary" title="Ejecutar motor determinista de diagnósticos de red">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button id="btn-run-diagnostics" class="btn btn-primary"
+        title="Ejecutar motor determinista de diagnósticos de red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
@@ -79,8 +89,10 @@
       </button>
 
       <!-- Botón Exportar Reporte para Profesor -->
-      <button id="btn-export-report" class="btn btn-secondary" title="Generar e imprimir informe de evaluación formal" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button id="btn-export-report" class="btn btn-secondary" title="Generar e imprimir informe de evaluación formal"
+        type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
           <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -92,7 +104,8 @@
 
       <!-- Botón Guía Rápida de Uso -->
       <button id="btn-open-help" class="btn-theme-toggle" title="Guía rápida: ¿Cómo usar NetTutorIA?" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -102,7 +115,8 @@
       <!-- Selector de Modo Oscuro / Claro -->
       <button id="btn-theme-toggle" class="btn-theme-toggle" title="Cambiar tema (Claro / Oscuro)" type="button">
         <!-- Icono Sol (Modo Claro) -->
-        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5"></circle>
           <line x1="12" y1="1" x2="12" y2="3"></line>
           <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -114,7 +128,8 @@
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
         </svg>
         <!-- Icono Luna (Modo Oscuro) -->
-        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
       </button>
@@ -132,12 +147,27 @@
           <p id="lab-desc">Topología activa de red</p>
         </div>
 
-        <!-- Indicador Compacto de Consistencia -->
-        <div class="score-badge">
-          <span class="score-circle" id="score-value">--%</span>
-          <div class="score-meta">
-            <span class="score-meta-label">Consistencia</span>
-            <span class="score-meta-issues" id="issues-summary">Calculando...</span>
+        <div class="topology-header-right">
+          <!-- Botón Cuadro de Actividad (.PKA) estilo Packet Tracer -->
+          <button id="btn-open-activity" class="btn btn-activity"
+            title="Ver cuadro de instrucciones de la actividad (.pka)" type="button" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            Actividad (.PKA)
+          </button>
+
+          <!-- Indicador Compacto de Consistencia -->
+          <div class="score-badge">
+            <span class="score-circle" id="score-value">--%</span>
+            <div class="score-meta">
+              <span class="score-meta-label">Consistencia</span>
+              <span class="score-meta-issues" id="issues-summary">Calculando...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -159,24 +189,28 @@
               <span class="pt-tri-dot down"></span> Apagado (Down)
             </span>
           </div>
-          <span class="pt-legend-tip">Clic en equipo: Inspeccionar · Arrastrar: Mover · Rueda: Zoom · Shift+Arrastrar: Desplazar</span>
+          <span class="pt-legend-tip">Clic en equipo: Inspeccionar · Arrastrar: Mover · Rueda: Zoom · Shift+Arrastrar:
+            Desplazar</span>
         </div>
 
         <!-- Barra de Herramientas del Lienzo (Zoom / Reset) -->
         <div class="canvas-toolbar">
           <button id="btn-zoom-in" class="canvas-tool-btn" title="Acercar (+)" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
           </button>
           <button id="btn-zoom-out" class="canvas-tool-btn" title="Alejar (-)" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
           </button>
           <button id="btn-zoom-reset" class="canvas-tool-btn" title="Restablecer vista (1:1)" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
               <path d="M3 3v5h5"></path>
             </svg>
@@ -191,11 +225,13 @@
               <span id="inspect-device-name">Router1</span>
             </div>
             <div class="inspect-actions">
-              <button id="btn-inspect-open-cli" class="btn-inspect-cli" title="Abrir consola CLI de este equipo" type="button" style="display: none;">
+              <button id="btn-inspect-open-cli" class="btn-inspect-cli" title="Abrir consola CLI de este equipo"
+                type="button" style="display: none;">
                 &gt;_ Abrir CLI
               </button>
               <button id="btn-close-inspect" class="btn-close-inspect" title="Cerrar" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -224,13 +260,15 @@
       <!-- Pestañas del Panel Lateral -->
       <nav class="sidebar-tabs" role="tablist">
         <button class="tab-btn active" data-tab="tutor" role="tab" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
           Tutor Socrático
         </button>
         <button class="tab-btn" data-tab="diagnostics" role="tab" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -239,7 +277,8 @@
           <span id="diag-tab-badge" class="tab-badge">0</span>
         </button>
         <button class="tab-btn" data-tab="tools" role="tab" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
           Simulador & CLI
@@ -256,7 +295,8 @@
           <div class="hint-level-bar">
             <span class="hint-label">Nivel de Pista:</span>
             <div class="hint-buttons">
-              <button class="btn-hint active" data-level="1" title="Pregunta conceptual para razonamiento" type="button">
+              <button class="btn-hint active" data-level="1" title="Pregunta conceptual para razonamiento"
+                type="button">
                 N1 Conceptual
               </button>
               <button class="btn-hint" data-level="2" title="Orientación técnica hacia el componente" type="button">
@@ -270,13 +310,8 @@
 
           <!-- Barra de Entrada de Mensaje -->
           <div class="chat-input-bar">
-            <input 
-              type="text" 
-              id="chat-input" 
-              class="chat-input" 
-              placeholder="Consulta a NetTutor sobre una inconsistencia o equipo..."
-              autocomplete="off"
-            />
+            <input type="text" id="chat-input" class="chat-input"
+              placeholder="Consulta a NetTutor sobre una inconsistencia o equipo..." autocomplete="off" />
             <button id="btn-send-chat" class="btn btn-primary" type="button" title="Enviar mensaje">
               Enviar
             </button>
@@ -298,7 +333,8 @@
           <div class="tool-card">
             <div class="tool-card-header">
               <span class="tool-card-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                 </svg>
                 Prueba de Conectividad (ICMP Ping)
@@ -326,7 +362,8 @@
           <div class="tool-card cli-tool-card">
             <div class="tool-card-header">
               <span class="tool-card-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="4 17 10 11 4 5"></polyline>
                   <line x1="12" y1="19" x2="20" y2="19"></line>
                 </svg>
@@ -338,13 +375,14 @@
             </div>
             <div class="cli-terminal-window">
               <div id="cli-output" class="cli-output-log">
-Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 15.0(2)SE4
-NetTutorIA Interactive Emulation Engine active.
-Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mode trunk', etc.
+                Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 15.0(2)SE4
+                NetTutorIA Interactive Emulation Engine active.
+                Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mode trunk', etc.
               </div>
               <div class="cli-input-line">
                 <span id="cli-prompt" class="cli-prompt-label">Switch#</span>
-                <input type="text" id="cli-input-command" class="cli-input-field" placeholder="Escribe comando Cisco IOS..." autocomplete="off" spellcheck="false" />
+                <input type="text" id="cli-input-command" class="cli-input-field"
+                  placeholder="Escribe comando Cisco IOS..." autocomplete="off" spellcheck="false" />
               </div>
             </div>
           </div>
@@ -359,21 +397,20 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
       <div class="modal-header">
         <h3 class="modal-title">Importar Configuración Cisco IOS</h3>
         <button id="btn-close-import" class="btn-close-inspect" title="Cerrar modal" type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
       <p class="modal-desc">
-        Pega el resultado del comando <code>show running-config</code> de un switch o router. NetTutorIA extraerá interfaces, subredes, VLANs y enlaces para integrarlos a la topología activa.
+        Pega el resultado del comando <code>show running-config</code> de un switch o router. NetTutorIA extraerá
+        interfaces, subredes, VLANs y enlaces para integrarlos a la topología activa.
       </p>
-      <textarea 
-        id="import-config-text" 
-        class="modal-textarea" 
+      <textarea id="import-config-text" class="modal-textarea"
         placeholder="hostname S1&#10;interface FastEthernet0/1&#10; switchport mode trunk&#10;!&#10;interface FastEthernet0/10&#10; switchport access vlan 10&#10;!"
-        spellcheck="false"
-      ></textarea>
+        spellcheck="false"></textarea>
       <div class="modal-footer">
         <button id="btn-cancel-import" class="btn btn-secondary" type="button">
           Cancelar
@@ -391,7 +428,8 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
       <div class="modal-header">
         <h3 class="modal-title">Informe Formal de Evaluación de Red</h3>
         <button id="btn-close-report" class="btn-close-inspect" title="Cerrar reporte" type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
@@ -402,7 +440,8 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
       </div>
       <div class="modal-footer">
         <button id="btn-print-report" class="btn btn-primary" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 6 2 18 2 18 9"></polyline>
             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
             <rect x="6" y="14" width="12" height="8"></rect>
@@ -419,7 +458,8 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
       <div class="modal-header">
         <h3 class="modal-title">Guía Rápida — Cómo usar NetTutorIA</h3>
         <button id="btn-close-help" class="btn-close-inspect" title="Cerrar guía" type="button">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
@@ -429,25 +469,34 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
         <div class="help-step">
           <span class="help-step-num">1</span>
           <div>
-            <strong>Carga tu práctica:</strong> Elige un laboratorio del selector superior, sube un archivo <code>.pkt</code> / <code>.pka</code> de Cisco Packet Tracer o pega un <code>show running-config</code>.
+            <strong>Carga tu práctica:</strong> Elige un laboratorio del selector superior, sube un archivo
+            <code>.pkt</code> / <code>.pka</code> de Cisco Packet Tracer o pega un <code>show running-config</code>.
           </div>
         </div>
         <div class="help-step">
           <span class="help-step-num">2</span>
           <div>
-            <strong>Interpreta los símbolos (como en Packet Tracer):</strong> Los triángulos en los cables indican el estado del puerto (<span style="color:#16A34A;font-weight:600;">Verde = Up</span>, <span style="color:#D97706;font-weight:600;">Ámbar = Conflicto L2/L3</span>, <span style="color:#DC2626;font-weight:600;">Rojo = Shutdown</span>). Haz clic en cualquier equipo para ver sus interfaces o abrir su CLI.
+            <strong>Interpreta los símbolos (como en Packet Tracer):</strong> Los triángulos en los cables indican el
+            estado del puerto (<span style="color:#16A34A;font-weight:600;">Verde = Up</span>, <span
+              style="color:#D97706;font-weight:600;">Ámbar = Conflicto L2/L3</span>, <span
+              style="color:#DC2626;font-weight:600;">Rojo = Shutdown</span>). Haz clic en cualquier equipo para ver sus
+            interfaces o abrir su CLI.
           </div>
         </div>
         <div class="help-step">
           <span class="help-step-num">3</span>
           <div>
-            <strong>Diagnostica y aprende:</strong> Revisa la pestaña <em>Diagnóstico</em> para ver las fallas detectadas y pulsa <em>Consultar pista socrática</em> para recibir pistas paso a paso (N1 Conceptual → N2 Clave → N3 Solución).
+            <strong>Diagnostica y aprende:</strong> Revisa la pestaña <em>Diagnóstico</em> para ver las fallas
+            detectadas y pulsa <em>Consultar pista socrática</em> para recibir pistas paso a paso (N1 Conceptual → N2
+            Clave → N3 Solución).
           </div>
         </div>
         <div class="help-step">
           <span class="help-step-num">4</span>
           <div>
-            <strong>Corrige y prueba en vivo:</strong> En <em>Simulador &amp; CLI</em> puedes ejecutar comandos Cisco IOS (<code>conf t</code>, <code>int Fa0/1</code>, <code>switchport mode trunk</code>, <code>no shut</code>) y validar la conectividad con el simulador de <strong>Ping</strong>.
+            <strong>Corrige y prueba en vivo:</strong> En <em>Simulador &amp; CLI</em> puedes ejecutar comandos Cisco
+            IOS (<code>conf t</code>, <code>int Fa0/1</code>, <code>switchport mode trunk</code>, <code>no shut</code>)
+            y validar la conectividad con el simulador de <strong>Ping</strong>.
           </div>
         </div>
       </div>
@@ -457,6 +506,32 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
     </div>
   </div>
 
-  <script type="module" src="/static/js/app.js?v=3.0"></script>
+  <!-- Modal Cuadro de Actividad (.PKA) estilo Cisco Packet Tracer -->
+  <div id="modal-activity" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box modal-box-large activity-modal-box">
+      <div class="modal-header">
+        <div class="activity-header-title">
+          <h3 class="modal-title" id="activity-modal-title">Instrucciones de la Actividad (.PKA)</h3>
+          <div id="activity-page-tabs" class="activity-page-tabs"></div>
+        </div>
+        <button id="btn-close-activity" class="btn-close-inspect" title="Cerrar cuadro de actividad" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="activity-instructions-body" class="activity-instructions-body">
+        <!-- Contenido HTML sanitizado del cuadro de actividad .pka -->
+      </div>
+      <div class="modal-footer">
+        <button id="btn-ok-activity" class="btn btn-primary" type="button">Cerrar instrucciones</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/js/app.js?v=3.1"></script>
 </body>
+
 </html>

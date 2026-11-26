@@ -103,6 +103,21 @@ class NetTutorApp {
     if (closeHelpBtn) closeHelpBtn.addEventListener('click', closeHelp);
     if (okHelpBtn) okHelpBtn.addEventListener('click', closeHelp);
 
+    // Modal Cuadro de Actividad (.PKA)
+    const activityModal = document.getElementById('modal-activity');
+    const openActivityBtn = document.getElementById('btn-open-activity');
+    const closeActivityBtn = document.getElementById('btn-close-activity');
+    const okActivityBtn = document.getElementById('btn-ok-activity');
+    const closeActivity = () => activityModal && activityModal.classList.remove('active');
+    if (openActivityBtn && activityModal) {
+      openActivityBtn.addEventListener('click', () => {
+        this.renderActivityModal(0);
+        activityModal.classList.add('active');
+      });
+    }
+    if (closeActivityBtn) closeActivityBtn.addEventListener('click', closeActivity);
+    if (okActivityBtn) okActivityBtn.addEventListener('click', closeActivity);
+
     // Modal Importar Config
     const modal = document.getElementById('modal-import');
     const openImportBtn = document.getElementById('btn-open-import');
@@ -136,6 +151,7 @@ class NetTutorApp {
         this.topologyViewer.resetView();
         await this.refreshDiagnostics();
         this.populateToolSelectors();
+        this.updateActivityButton(true);
         this.announceLoadedLab();
       } catch (err) {
         alert('Error al cargar la práctica: ' + err.message);
@@ -328,6 +344,54 @@ class NetTutorApp {
     }
   }
 
+  updateActivityButton(autoOpen = false) {
+    const btn = document.getElementById('btn-open-activity');
+    const modal = document.getElementById('modal-activity');
+    const pages = (this.currentTopology && this.currentTopology.activity_instructions) || [];
+    if (!btn) return;
+
+    if (pages.length > 0) {
+      btn.style.display = 'inline-flex';
+      if (autoOpen && modal) {
+        this.renderActivityModal(0);
+        modal.classList.add('active');
+      }
+    } else {
+      btn.style.display = 'none';
+      if (modal) modal.classList.remove('active');
+    }
+  }
+
+  renderActivityModal(pageIdx = 0) {
+    const pages = (this.currentTopology && this.currentTopology.activity_instructions) || [];
+    const titleEl = document.getElementById('activity-modal-title');
+    const tabsEl = document.getElementById('activity-page-tabs');
+    const bodyEl = document.getElementById('activity-instructions-body');
+    if (!bodyEl || !pages.length) return;
+
+    const safeIdx = Math.max(0, Math.min(pageIdx, pages.length - 1));
+    if (titleEl) {
+      titleEl.textContent = `Actividad (.PKA) — ${this.currentTopology.name || 'Instrucciones'}`;
+    }
+
+    if (tabsEl) {
+      tabsEl.innerHTML = '';
+      if (pages.length > 1) {
+        pages.forEach((p, idx) => {
+          const tabBtn = document.createElement('button');
+          tabBtn.type = 'button';
+          tabBtn.className = `activity-page-btn ${idx === safeIdx ? 'active' : ''}`;
+          tabBtn.textContent = p.title || `Página ${idx + 1}`;
+          tabBtn.addEventListener('click', () => this.renderActivityModal(idx));
+          tabsEl.appendChild(tabBtn);
+        });
+      }
+    }
+
+    bodyEl.innerHTML = pages[safeIdx].html || `<p>${this.escapeHtml(pages[safeIdx].text || '')}</p>`;
+    bodyEl.scrollTop = 0;
+  }
+
   async loadApp() {
     try {
       this.currentTopology = await ApiClient.getTopology();
@@ -336,6 +400,7 @@ class NetTutorApp {
 
       await this.refreshDiagnostics();
       this.populateToolSelectors();
+      this.updateActivityButton(false);
     } catch (e) {
       console.error('Error cargando topología:', e);
     }
@@ -691,6 +756,7 @@ class NetTutorApp {
         this.topologyViewer.resetView();
         await this.refreshDiagnostics();
         this.populateToolSelectors();
+        this.updateActivityButton(true);
         this.announceLoadedLab();
       } catch (err) {
         alert('Error al procesar el archivo .pkt: ' + err.message);

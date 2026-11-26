@@ -23,6 +23,7 @@ class Interface(BaseModel):
     name: str
     ip_address: Optional[str] = None
     subnet_mask: Optional[str] = None
+    dhcp_enabled: bool = False
     status: InterfaceStatus = InterfaceStatus.UP
     switchport_mode: SwitchportMode = SwitchportMode.NONE
     access_vlan: Optional[int] = None
@@ -61,6 +62,7 @@ class Topology(BaseModel):
     devices: List[Device] = Field(default_factory=list)
     links: List[Link] = Field(default_factory=list)
     rubric: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    activity_instructions: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 class DiagnosticSeverity(str, Enum):
     ERROR = "error"     # ❌ Impide la conectividad básica

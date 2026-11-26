@@ -4,6 +4,8 @@ Convierte el XML desencriptado de Packet Tracer en el modelo unificado `Topology
 de NetTutorIA (Dispositivos, Interfaces, VLANs, Configuraciones IOS y Enlaces).
 """
 
+import html
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
@@ -234,26 +236,125 @@ class PktParser:
         # 4. Normalizar coordenadas (pos_x, pos_y) para encuadrar en el visor SVG
         cls._normalize_coordinates(devices)
 
+        # 5. Extraer cuadro de instrucciones de actividad (.pka) si existe
+        activity_instructions = cls._extract_activity_instructions(root)
+
         # Resumen descriptivo automático
         routers_n = sum(1 for d in devices if d.type == DeviceType.ROUTER)
         switches_n = sum(1 for d in devices if d.type == DeviceType.SWITCH)
         hosts_n = sum(1 for d in devices if d.type in (DeviceType.PC, DeviceType.SERVER))
+        act_suffix = f" · 📋 Actividad ({len(activity_instructions)} pág.)" if activity_instructions else ""
         desc = (
             f"Archivo Packet Tracer (v{pt_version}) · "
-            f"{switches_n} Switch(es), {routers_n} Router(s), {hosts_n} Host(s), {len(links)} enlaces."
+            f"{switches_n} Switch(es), {routers_n} Router(s), {hosts_n} Host(s), {len(links)} enlaces{act_suffix}."
         )
 
         return Topology(
             id=topology_id,
-            name=f"Práctica PKT: {default_name}",
+            name=f"Práctica PKT: {default_name}" if not activity_instructions else f"Actividad PKA: {default_name}",
             description=desc,
             devices=devices,
             links=links,
             rubric={
-                "source_format": "Cisco Packet Tracer (.pkt)",
+                "source_format": "Cisco Packet Tracer Activity (.pka)" if activity_instructions else "Cisco Packet Tracer (.pkt)",
                 "pt_version": pt_version,
+                "has_activity_instructions": bool(activity_instructions),
             },
+            activity_instructions=activity_instructions,
         )
+
+    @classmethod
+    def _extract_activity_instructions(cls, root: ET.Element) -> List[Dict[str, str]]:
+        """
+        Extrae las páginas del cuadro de instrucciones de una actividad .pka
+        (etiquetas <INSTRUCTIONS>/<PAGE>, <CONTENT>, <TEXT> o <HTML>).
+        """
+        pages: List[Dict[str, str]] = []
+        instr_blocks = root.findall(".//INSTRUCTIONS")
+        if not instr_blocks:
+            # Algunos .pka guardan instrucciones bajo <INSTRUCTION> o <ACTIVITY_INSTRUCTIONS>
+            instr_blocks = root.findall(".//INSTRUCTION") + root.findall(".//ACTIVITY_INSTRUCTIONS")
+
+        raw_entries: List[Tuple[str, str]] = []
+        for block in instr_blocks:
+            page_els = block.findall("./PAGE") or block.findall(".//PAGE")
+            if page_els:
+                for idx, page_el in enumerate(page_els, start=1):
+                    title = (page_el.get("title") or page_el.findtext("TITLE") or "").strip()
+                    body_parts = []
+                    for tag in ("HTML", "CONTENT", "CONTENTS", "TEXT", "BODY"):
+                        t = page_el.findtext(tag)
+                        if t and t.strip():
+                            body_parts.append(t.strip())
+                    if not body_parts:
+                        direct = "".join(page_el.itertext()).strip()
+                        if direct:
+                            body_parts.append(direct)
+                    raw_html = "\n".join(body_parts).strip()
+                    if raw_html:
+                        raw_entries.append((title or f"Página {idx}", raw_html))
+            else:
+                direct_text = "".join(block.itertext()).strip()
+                if direct_text:
+                    raw_entries.append(("Instrucciones", direct_text))
+
+        seen_hashes: Set[str] = set()
+        for idx, (title, raw_content) in enumerate(raw_entries, start=1):
+            # Desescapar HTML si viene codificado como &lt;html&gt;...
+            decoded = raw_content
+            if "&lt;" in decoded and "&gt;" in decoded:
+                decoded = html.unescape(decoded)
+
+            safe_html = cls._sanitize_instruction_html(decoded)
+            plain_text = cls._html_to_plain_text(safe_html)
+            if not plain_text:
+                continue
+
+            sig = plain_text[:200]
+            if sig in seen_hashes:
+                continue
+            seen_hashes.add(sig)
+
+            pages.append(
+                {
+                    "title": title or f"Página {idx}",
+                    "html": safe_html,
+                    "text": plain_text,
+                }
+            )
+
+        return pages
+
+    @staticmethod
+    def _sanitize_instruction_html(raw_html: str) -> str:
+        """Limpia scripts, iframes y handlers peligrosos preservando tablas y formato."""
+        # Extraer solo el interior de <body> si viene documento HTML completo
+        body_match = re.search(r"<body[^>]*>([\s\S]*?)</body>", raw_html, re.IGNORECASE)
+        cleaned = body_match.group(1) if body_match else raw_html
+
+        # Remover bloques peligrosos o encabezados innecesarios
+        cleaned = re.sub(r"<(script|style|iframe|object|embed|head|meta|link)[^>]*>[\s\S]*?</\1>", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"<(meta|link|base)[^>]*>", "", cleaned, flags=re.IGNORECASE)
+        # Remover manejadores inline (onclick, onerror, etc.) y URLs javascript:
+        cleaned = re.sub(r"\s+on[a-z]+\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s>]+)", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"javascript\s*:", "", cleaned, flags=re.IGNORECASE)
+
+        # Si no contiene etiquetas HTML, convertir saltos de línea a párrafos
+        if not re.search(r"<[a-z][\s\S]*?>", cleaned, re.IGNORECASE):
+            escaped = html.escape(cleaned.strip())
+            cleaned = "<p>" + escaped.replace("\n\n", "</p><p>").replace("\n", "<br>") + "</p>"
+
+        return cleaned.strip()
+
+    @staticmethod
+    def _html_to_plain_text(safe_html: str) -> str:
+        txt = re.sub(r"<(br|p|div|tr|li|h[1-6])[^>]*>", "\n", safe_html, flags=re.IGNORECASE)
+        txt = re.sub(r"<td[^>]*>", " | ", txt, flags=re.IGNORECASE)
+        txt = re.sub(r"<[^>]+>", "", txt)
+        txt = html.unescape(txt)
+        txt = re.sub(r"[ \t]+", " ", txt)
+        txt = re.sub(r"\n{3,}", "\n\n", txt)
+        return txt.strip()
 
     @staticmethod
     def _map_device_type(pt_type: str) -> DeviceType:
@@ -298,11 +399,19 @@ class PktParser:
                 subnet = None
 
             port_up = (port_el.findtext("PORT_ADMIN_STATUS") or "true").strip().lower() != "false"
+            dhcp_raw = (
+                port_el.findtext("DHCP_ENABLED")
+                or port_el.findtext("DHCP")
+                or eng_el.findtext("DHCP_ENABLED")
+                or "false"
+            ).strip().lower()
+            dhcp_on = dhcp_raw in ("true", "1", "yes")
             interfaces.append(
                 Interface(
                     name=default_port_name if not interfaces else f"FastEthernet{len(interfaces)}",
                     ip_address=ip_addr,
                     subnet_mask=subnet,
+                    dhcp_enabled=dhcp_on,
                     status=InterfaceStatus.UP if port_up else InterfaceStatus.ADMIN_DOWN,
                 )
             )
