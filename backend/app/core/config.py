@@ -14,7 +14,7 @@ class Settings:
     
     # Clave de Gemini (opcional pero recomendada para el tutor socrático completo)
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     
     # Packet Tracer IPC Settings (por defecto puerto 39000)
     PT_IPC_HOST: str = os.getenv("PT_IPC_HOST", "127.0.0.1")

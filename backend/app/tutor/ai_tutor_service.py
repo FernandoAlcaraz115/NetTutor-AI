@@ -1,4 +1,8 @@
+import warnings
 from typing import List, Dict, Optional
+
+# Silenciar advertencia de descontinuación de la librería legacy
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
 import google.generativeai as genai
 from app.core.config import settings
 from app.core.models import (
@@ -14,7 +18,7 @@ class AITutorService:
             try:
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
+                    model_name=settings.GEMINI_MODEL or "gemini-2.5-flash",
                     system_instruction=SYSTEM_SOCRATIC_TUTOR_PROMPT
                 )
             except Exception as e:
@@ -48,7 +52,8 @@ class AITutorService:
                 user_message=request.user_message,
                 topology_summary=topo_summary,
                 findings_summary=findings_summary,
-                hint_level=hint_level
+                hint_level=hint_level,
+                chat_history=request.chat_history
             )
             response = self.model.generate_content(prompt)
             reply_text = response.text

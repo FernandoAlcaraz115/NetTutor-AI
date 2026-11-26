@@ -618,23 +618,53 @@ body {
   color: var(--text-primary);
 }
 
-/* SVG Topology Nodes & Links */
+/* SVG Topology Nodes & Links (Estilo Cisco Packet Tracer) */
 .topology-link {
-  stroke: var(--link-normal);
-  stroke-width: 2px;
+  stroke: #334155;
+  stroke-width: 2.2px;
   stroke-linecap: round;
   transition: stroke 0.2s ease, stroke-width 0.2s ease;
 }
 
+[data-theme="dark"] .topology-link {
+  stroke: #94A3B8;
+}
+
+.topology-link.cable-copper_cross {
+  stroke-dasharray: 6 4;
+}
+
+.topology-link.cable-serial {
+  stroke: #DC2626;
+  stroke-width: 2.4px;
+}
+
+.topology-link.cable-fiber {
+  stroke: #F97316;
+  stroke-width: 2.4px;
+}
+
 .topology-link:hover {
   stroke: var(--link-hover);
-  stroke-width: 3px;
+  stroke-width: 3.2px;
 }
 
 .topology-link.error {
   stroke: var(--link-error);
-  stroke-width: 2.5px;
+  stroke-width: 2.6px;
   stroke-dasharray: 5 3;
+}
+
+.topology-link.ping-success {
+  stroke: #16A34A !important;
+  stroke-width: 3.5px !important;
+  stroke-dasharray: none !important;
+}
+
+.topology-link.ping-failure {
+  stroke: #DC2626 !important;
+  stroke-width: 3.5px !important;
+  stroke-dasharray: 6 3 !important;
 }
 
 .link-label-rect {
@@ -646,8 +676,8 @@ body {
 
 .link-label-text {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 500;
+  font-size: 9px;
+  font-weight: 600;
   fill: var(--text-secondary);
 }
 
@@ -659,38 +689,173 @@ body {
   cursor: grabbing;
 }
 
-.node-card-bg {
+.pt-selection-ring {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2px;
+  transition: var(--transition-fast);
+}
+
+.topology-node:hover .pt-selection-ring {
+  fill: rgba(49, 130, 168, 0.08);
+  stroke: rgba(49, 130, 168, 0.45);
+}
+
+.topology-node.highlighted .pt-selection-ring {
+  fill: rgba(49, 130, 168, 0.14);
+  stroke: var(--accent-interactive);
+  stroke-dasharray: 4 2;
+}
+
+.pt-label-bg {
   fill: var(--bg-surface);
   stroke: var(--border-default);
-  stroke-width: 1.5px;
-  filter: drop-shadow(0 1px 3px rgba(16, 24, 40, 0.06));
-  transition: var(--transition-fast);
-  rx: 6px;
+  stroke-width: 1px;
+  opacity: 0.94;
 }
 
-.topology-node:hover .node-card-bg {
-  stroke: var(--brand-primary);
-  filter: drop-shadow(0 4px 6px rgba(16, 24, 40, 0.08));
-}
-
-.topology-node.highlighted .node-card-bg {
+.topology-node.highlighted .pt-label-bg {
   stroke: var(--accent-interactive);
-  stroke-width: 2px;
-  filter: drop-shadow(0 0 0 3px rgba(49, 130, 168, 0.15));
 }
 
 .node-title {
   font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   fill: var(--text-primary);
 }
 
 .node-subtitle {
   font-family: var(--font-mono);
   font-size: 9.5px;
-  font-weight: 400;
+  font-weight: 500;
   fill: var(--text-secondary);
+}
+
+/* Leyenda Visual estilo Packet Tracer */
+.pt-legend-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  z-index: 10;
+  pointer-events: auto;
+  opacity: 0.95;
+}
+
+.pt-legend-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pt-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.pt-tri-dot {
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #22C55E;
+  display: inline-block;
+}
+
+.pt-tri-dot.up { border-left-color: #22C55E; }
+.pt-tri-dot.warn { border-left-color: #F59E0B; }
+.pt-tri-dot.down { border-left-color: #EF4444; }
+
+.pt-legend-tip {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Acciones en Panel de Inspección */
+.inspect-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-inspect-cli {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--brand-border);
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-inspect-cli:hover {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+/* Modal Guía Rápida */
+.help-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0 18px;
+  font-size: 0.83rem;
+  color: var(--text-primary);
+}
+
+.help-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-default);
+  line-height: 1.45;
+}
+
+.help-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-weight: 700;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.help-step code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-surface-hover);
+  color: var(--brand-primary);
 }
 
 /* Device Contextual Inspector Drawer */

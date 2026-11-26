@@ -67,8 +67,8 @@ export class DiagnosticsPanel {
       card.innerHTML = `
         <div class="finding-header">
           <div class="finding-badges">
-            <span class="finding-pill ${finding.severity}">[${finding.layer}] ${finding.severity.toUpperCase()}</span>
-            <span class="finding-device-tag">${locationInfo}</span>
+            <span class="finding-pill ${finding.severity}">[${this.escapeHtml(finding.layer)}] ${this.escapeHtml(finding.severity.toUpperCase())}</span>
+            <span class="finding-device-tag">${this.escapeHtml(locationInfo)}</span>
           </div>
         </div>
         <div class="finding-title">${this.escapeHtml(finding.title)}</div>

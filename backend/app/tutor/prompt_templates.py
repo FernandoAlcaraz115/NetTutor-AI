@@ -22,15 +22,28 @@ def build_tutor_user_prompt(
     user_message: str,
     topology_summary: str,
     findings_summary: str,
-    hint_level: int
+    hint_level: int,
+    chat_history: list = None
 ) -> str:
+    history_block = ""
+    if chat_history:
+        recent = chat_history[-6:]
+        lines = []
+        for msg in recent:
+            role_label = "Estudiante" if msg.get("role") == "user" else "NetTutor"
+            content = (msg.get("content") or "").strip()
+            if content:
+                lines.append(f"- {role_label}: {content[:350]}")
+        if lines:
+            history_block = "\n[HISTORIAL RECIENTE DE LA CONVERSACIÓN]\n" + "\n".join(lines) + "\n"
+
     return f"""
 [CONTEXTO DE LA TOPOLOGÍA]
 {topology_summary}
 
 [HALLAZGOS TÉCNICOS DETECTADOS POR EL MOTOR DE DIAGNÓSTICO]
 {findings_summary}
-
+{history_block}
 [NIVEL DE PISTA REQUERIDO POR EL ESTUDIANTE]
 Nivel {hint_level} (1=Conceptual, 2=Dispositivo/Protocolo, 3=Solución Técnica Directa)
 

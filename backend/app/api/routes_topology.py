@@ -52,12 +52,17 @@ def list_presets():
     ]
 
     if settings.PRACTICES_DIR.exists():
-        for pkt_file in sorted(settings.PRACTICES_DIR.glob("*.pkt")):
+        pkt_files = sorted(
+            [p for p in settings.PRACTICES_DIR.iterdir() if p.is_file() and p.suffix.lower() in (".pkt", ".pka")],
+            key=lambda p: p.name.lower(),
+        )
+        for pkt_file in pkt_files:
+            ext_label = pkt_file.suffix.upper().lstrip(".")
             presets.append(
                 {
                     "id": f"pkt:{pkt_file.name}",
-                    "name": f"📦 [PKT] {pkt_file.stem}",
-                    "difficulty": "Packet Tracer (.pkt)",
+                    "name": f"📦 [{ext_label}] {pkt_file.stem}",
+                    "difficulty": f"Packet Tracer ({pkt_file.suffix.lower()})",
                     "source": "pkt_bank",
                     "filename": pkt_file.name,
                     "description": f"Archivo real de Cisco Packet Tracer ({pkt_file.name}) en BANCO DE PRACTICAS.",
@@ -81,7 +86,10 @@ def load_preset(preset_id: str):
 
     if preset_id.startswith("pkt:"):
         filename = preset_id.split("pkt:", 1)[1].strip()
-        pkt_path = (settings.PRACTICES_DIR / filename).resolve()
+        practices_root = settings.PRACTICES_DIR.resolve()
+        pkt_path = (practices_root / filename).resolve()
+        if practices_root not in pkt_path.parents:
+            raise HTTPException(status_code=400, detail="Ruta de archivo inválida.")
         if not pkt_path.exists():
             raise HTTPException(status_code=404, detail=f"Archivo '{filename}' no encontrado en BANCO DE PRACTICAS")
         try:
@@ -115,10 +123,14 @@ def upload_pkt_file(payload: Dict[str, str]):
 
     try:
         raw_bytes = base64.b64decode(b64_data)
+        if len(raw_bytes) > 25 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="El archivo supera el tamaño máximo permitido (25 MB).")
         parsed_topo = PktParser.parse_bytes(raw_bytes, filename=filename)
         return set_current_topology(parsed_topo)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"No se pudo desencriptar el archivo .pkt: {e}")
+        raise HTTPException(status_code=400, detail=f"No se pudo desencriptar el archivo .pkt/.pka: {e}")
 
 
 @router.post("/import-config")
@@ -139,8 +151,10 @@ def import_cisco_config(payload: Dict[str, str]):
         None,
     )
     if existing_idx is not None:
-        parsed_device.pos_x = current_topology.devices[existing_idx].pos_x
-        parsed_device.pos_y = current_topology.devices[existing_idx].pos_y
+        existing_dev = current_topology.devices[existing_idx]
+        parsed_device.id = existing_dev.id
+        parsed_device.pos_x = existing_dev.pos_x
+        parsed_device.pos_y = existing_dev.pos_y
         current_topology.devices[existing_idx] = parsed_device
     else:
         current_topology.devices.append(parsed_device)

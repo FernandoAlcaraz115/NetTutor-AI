@@ -224,10 +224,21 @@ _PT_INITIAL_CTR = int.from_bytes(_omac_t(_PT_CIPHER, 0, b"\x10" * 16), "big")
 class PktDecoder:
     """Decodificador de archivos binarios .pkt y .pka de Cisco Packet Tracer a XML."""
 
-    @staticmethod
-    def decode_bytes_to_xml(raw_bytes: bytes) -> str:
+    # Límite máximo de XML descomprimido (50 MB) para evitar zip-bombs / exceso de RAM
+    MAX_DECOMPRESSED_BYTES = 50 * 1024 * 1024
+
+    @classmethod
+    def _safe_zlib_decompress(cls, data: bytes) -> bytes:
+        decompressor = zlib.decompressobj()
+        out = decompressor.decompress(data, cls.MAX_DECOMPRESSED_BYTES + 1)
+        if len(out) > cls.MAX_DECOMPRESSED_BYTES or not decompressor.eof:
+            raise ValueError("El archivo .pkt/.pka descomprimido excede el límite seguro (50 MB) o está truncado.")
+        return out
+
+    @classmethod
+    def decode_bytes_to_xml(cls, raw_bytes: bytes) -> str:
         """
-        Recibe los bytes crudos de un archivo .pkt y devuelve el documento XML limpio.
+        Recibe los bytes crudos de un archivo .pkt o .pka y devuelve el documento XML limpio.
         Soporta archivos de Packet Tracer 7.3 / 8.x / 9.x (Twofish-EAX) y versiones
         anteriores (XOR clásico).
         """
@@ -238,7 +249,7 @@ class PktDecoder:
 
         length = len(raw_bytes)
         if length < 20:
-            raise ValueError("El archivo .pkt es demasiado pequeño o está corrupto.")
+            raise ValueError("El archivo .pkt/.pka es demasiado pequeño o está corrupto.")
 
         try:
             # Etapa 1: Desofuscación inicial (inversión + máscara XOR posicional)
@@ -271,12 +282,22 @@ class PktDecoder:
             # Etapa 3: Desofuscación secundaria
             stage3 = bytes((b ^ ((ct_len - i) & 0xFF)) for i, b in enumerate(decrypted))
 
-            # Etapa 4: Descompresión zlib (omitiendo los 4 bytes de tamaño Qt qUncompress)
-            xml_bytes = zlib.decompress(stage3[4:])
+            # Etapa 4: Descompresión zlib segura (omitiendo los 4 bytes de tamaño Qt qUncompress)
+            xml_bytes = cls._safe_zlib_decompress(stage3[4:])
+        except ValueError:
+            raise
         except Exception:
             # Fallback para formato clásico Packet Tracer 5.x - 7.2 (XOR simple + zlib)
-            legacy = bytes((b ^ ((length - i) & 0xFF)) for i, b in enumerate(raw_bytes))
-            xml_bytes = zlib.decompress(legacy[4:])
+            try:
+                legacy = bytes((b ^ ((length - i) & 0xFF)) for i, b in enumerate(raw_bytes))
+                xml_bytes = cls._safe_zlib_decompress(legacy[4:])
+            except ValueError:
+                raise
+            except Exception as exc:
+                raise ValueError(
+                    "No se pudo desencriptar el archivo .pkt/.pka. Puede estar corrupto o provenir "
+                    "de una versión de Packet Tracer con un cifrado no soportado."
+                ) from exc
 
         xml_str = xml_bytes.decode("utf-8", errors="replace")
         return _INVALID_XML_CHARS_RE.sub("", xml_str)

@@ -8,9 +8,14 @@ class NetTutorApp {
     this.currentTopology = null;
     this.currentReport = null;
 
+    // Estado de inspección
+    this.inspectedDeviceId = null;
+
     // Estado CLI
     this.currentCliMode = 'priv';
     this.currentCliInterface = null;
+    this.cliHistory = [];
+    this.cliHistoryIndex = -1;
 
     // Elementos DOM
     this.svg = document.getElementById('topology-svg');
@@ -64,7 +69,39 @@ class NetTutorApp {
     // Cerrar panel de inspección de dispositivo
     document.getElementById('btn-close-inspect').addEventListener('click', () => {
       this.inspectPanel.classList.remove('active');
+      this.inspectedDeviceId = null;
     });
+
+    // Abrir CLI directo desde el panel de inspección (estilo Packet Tracer)
+    const inspectCliBtn = document.getElementById('btn-inspect-open-cli');
+    if (inspectCliBtn) {
+      inspectCliBtn.addEventListener('click', () => {
+        if (!this.inspectedDeviceId) return;
+        const toolsTab = document.querySelector('[data-tab="tools"]');
+        if (toolsTab) toolsTab.click();
+        const cliSelect = document.getElementById('select-cli-device');
+        if (cliSelect) {
+          cliSelect.value = this.inspectedDeviceId;
+          this.currentCliMode = 'priv';
+          this.currentCliInterface = null;
+          this.updateCliPrompt();
+        }
+        const cliInput = document.getElementById('cli-input-command');
+        if (cliInput) cliInput.focus();
+      });
+    }
+
+    // Modal Guía Rápida de Uso
+    const helpModal = document.getElementById('modal-help');
+    const openHelpBtn = document.getElementById('btn-open-help');
+    const closeHelpBtn = document.getElementById('btn-close-help');
+    const okHelpBtn = document.getElementById('btn-ok-help');
+    const closeHelp = () => helpModal && helpModal.classList.remove('active');
+    if (openHelpBtn && helpModal) {
+      openHelpBtn.addEventListener('click', () => helpModal.classList.add('active'));
+    }
+    if (closeHelpBtn) closeHelpBtn.addEventListener('click', closeHelp);
+    if (okHelpBtn) okHelpBtn.addEventListener('click', closeHelp);
 
     // Modal Importar Config
     const modal = document.getElementById('modal-import');
@@ -95,6 +132,7 @@ class NetTutorApp {
         this.currentTopology = loadedTopo;
         this.labTitle.textContent = loadedTopo.name;
         this.labDesc.textContent = loadedTopo.description || 'Topología activa de red';
+        this.resetLabUIState();
         this.topologyViewer.resetView();
         await this.refreshDiagnostics();
         this.populateToolSelectors();
@@ -161,6 +199,27 @@ class NetTutorApp {
       cliInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           this.handleExecuteCliCommand();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (this.cliHistory.length > 0) {
+            if (this.cliHistoryIndex === -1) {
+              this.cliHistoryIndex = this.cliHistory.length - 1;
+            } else if (this.cliHistoryIndex > 0) {
+              this.cliHistoryIndex--;
+            }
+            cliInput.value = this.cliHistory[this.cliHistoryIndex] || '';
+          }
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (this.cliHistory.length > 0 && this.cliHistoryIndex !== -1) {
+            if (this.cliHistoryIndex < this.cliHistory.length - 1) {
+              this.cliHistoryIndex++;
+              cliInput.value = this.cliHistory[this.cliHistoryIndex] || '';
+            } else {
+              this.cliHistoryIndex = -1;
+              cliInput.value = '';
+            }
+          }
         }
       });
     }
@@ -254,6 +313,19 @@ class NetTutorApp {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  resetLabUIState() {
+    this.inspectedDeviceId = null;
+    this.inspectPanel.classList.remove('active');
+    this.currentCliMode = 'priv';
+    this.currentCliInterface = null;
+    this.tutorChat.resetContext();
+    const resBox = document.getElementById('ping-results-box');
+    if (resBox) {
+      resBox.style.display = 'none';
+      resBox.innerHTML = '';
+    }
   }
 
   async loadApp() {
@@ -352,6 +424,11 @@ class NetTutorApp {
         </div>
         <div class="ping-hop-list">${hopsHtml}</div>
       `;
+
+      // Resaltar la ruta recorrida por el Ping en el lienzo SVG
+      if (res.path_links && res.path_links.length) {
+        this.topologyViewer.highlightPingPath(res.path_links, isSuccess);
+      }
     } catch (e) {
       resBox.innerHTML = `<div class="ping-status-banner failure">Error: ${this.escapeHtml(e.message)}</div>`;
     }
@@ -367,8 +444,19 @@ class NetTutorApp {
     const devId = cliSelect.value;
     if (!devId) return;
 
+    if (cmd) {
+      this.cliHistory.push(cmd);
+      this.cliHistoryIndex = -1;
+    }
+
     const currentPromptText = promptEl.textContent;
     cliInput.value = '';
+
+    // Manejo de limpieza de terminal en el cliente
+    if (cmd.toLowerCase() === 'clear' || cmd.toLowerCase() === 'cls') {
+      cliOutput.textContent = '';
+      return;
+    }
 
     // Escribir comando en el log
     cliOutput.textContent += `\n${currentPromptText} ${cmd}`;
@@ -391,9 +479,14 @@ class NetTutorApp {
 
       cliOutput.scrollTop = cliOutput.scrollHeight;
 
-      // Si la configuración cambió, recalcular diagnósticos en vivo
+      // Si la configuración cambió, recargar topología fresca y recalcular diagnósticos en vivo
       if (res.configuration_changed) {
+        this.currentTopology = await ApiClient.getTopology();
         await this.refreshDiagnostics();
+        if (this.inspectedDeviceId) {
+          const updatedDev = this.currentTopology.devices.find(d => d.id === this.inspectedDeviceId);
+          if (updatedDev) this.showDeviceDetails(updatedDev);
+        }
       }
     } catch (e) {
       cliOutput.textContent += `\n% Error: ${e.message}`;
@@ -510,6 +603,12 @@ class NetTutorApp {
   }
 
   showDeviceDetails(dev) {
+    this.inspectedDeviceId = dev.id;
+    const inspectCliBtn = document.getElementById('btn-inspect-open-cli');
+    if (inspectCliBtn) {
+      const isCisco = dev.type === 'router' || dev.type === 'switch';
+      inspectCliBtn.style.display = isCisco ? 'inline-flex' : 'none';
+    }
     this.inspectTitle.innerHTML = `<span>${this.escapeHtml(dev.name)}</span> <span class="inspect-title-badge">${dev.type.toUpperCase()}</span>`;
     this.inspectTbody.innerHTML = '';
 
@@ -588,6 +687,7 @@ class NetTutorApp {
         this.currentTopology = loadedTopo;
         this.labTitle.textContent = loadedTopo.name;
         this.labDesc.textContent = loadedTopo.description || 'Topología activa de red';
+        this.resetLabUIState();
         this.topologyViewer.resetView();
         await this.refreshDiagnostics();
         this.populateToolSelectors();

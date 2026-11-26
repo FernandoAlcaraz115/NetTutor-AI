@@ -36,6 +36,10 @@ def check_ospf_dhcp_rules(topology: Topology) -> List[DiagnosticFinding]:
 
                 # Detección de Wildcard invertida (usó máscara regular 255.255.255.0 como wildcard)
                 if wild_str.startswith("255."):
+                    try:
+                        suggested_wild = ".".join(str(255 - int(p)) for p in wild_str.split("."))
+                    except ValueError:
+                        suggested_wild = "0.0.0.255"
                     findings.append(
                         DiagnosticFinding(
                             id=f"ospf_wildcard_inverted_{dev.id}_{net_str.replace('.', '_')}",
@@ -50,10 +54,10 @@ def check_ospf_dhcp_rules(topology: Topology) -> List[DiagnosticFinding]:
                                 f"se configuró una máscara de subred convencional ({wild_str}) en vez de una máscara Wildcard (inversa)."
                             ),
                             hint_level1="Recuerda la regla de OSPF en Cisco IOS: ¿se utiliza la máscara de subred o la máscara Wildcard (inversa)?",
-                            hint_level2=f"Para una red con máscara 255.255.255.0, la máscara inversa Wildcard es 0.0.0.255.",
+                            hint_level2=f"Para una red con máscara {wild_str}, la máscara inversa Wildcard es {suggested_wild}.",
                             technical_solution=(
                                 f"{dev.name}(config-router)# no network {net_str} {wild_str} area {area_str}\n"
-                                f"{dev.name}(config-router)# network {net_str} 0.0.0.255 area {area_str}"
+                                f"{dev.name}(config-router)# network {net_str} {suggested_wild} area {area_str}"
                             )
                         )
                     )
@@ -69,8 +73,8 @@ def check_ospf_dhcp_rules(topology: Topology) -> List[DiagnosticFinding]:
                 except Exception:
                     pass
 
-            # Bloque DHCP: ip dhcp pool ESTUDIANTES
-            dhcp_match = re.match(r"^ip\s+dhcp\s+pool\s+(\w+)", line, re.IGNORECASE)
+            # Bloque DHCP: ip dhcp pool ESTUDIANTES (soporta guiones/puntos)
+            dhcp_match = re.match(r"^ip\s+dhcp\s+pool\s+(\S+)", line, re.IGNORECASE)
             if dhcp_match:
                 if current_dhcp_pool:
                     device_dhcp_pools.setdefault(dev.id, []).append(current_dhcp_pool)

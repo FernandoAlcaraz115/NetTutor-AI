@@ -114,7 +114,7 @@ def check_static_routing_rules(topology: Topology) -> List[DiagnosticFinding]:
                 pass
 
     # 3. Detección de bucles de dos saltos (A apunta a B y B apunta a A para la misma red)
-    router_map = {r.id: r for r in routers}
+    seen_loops = set()
     for r_a in routers:
         for route_a in r_a.static_routes:
             dest_a = route_a.get("network")
@@ -131,6 +131,10 @@ def check_static_routing_rules(topology: Topology) -> List[DiagnosticFinding]:
                         if route_b.get("network") == dest_a and route_b.get("mask") == mask_a:
                             nh_b = route_b.get("next_hop")
                             if nh_b in router_local_ips.get(r_a.id, set()):
+                                loop_key = (min(r_a.id, r_b.id), max(r_a.id, r_b.id), dest_a, mask_a)
+                                if loop_key in seen_loops:
+                                    continue
+                                seen_loops.add(loop_key)
                                 findings.append(
                                     DiagnosticFinding(
                                         id=f"static_route_loop_{r_a.id}_{r_b.id}_{dest_a.replace('.', '_')}",

@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/static/css/style.css?v=2.4">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.0">
 </head>
 <body>
 
@@ -90,6 +90,15 @@
         Exportar Reporte
       </button>
 
+      <!-- Botón Guía Rápida de Uso -->
+      <button id="btn-open-help" class="btn-theme-toggle" title="Guía rápida: ¿Cómo usar NetTutorIA?" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
+
       <!-- Selector de Modo Oscuro / Claro -->
       <button id="btn-theme-toggle" class="btn-theme-toggle" title="Cambiar tema (Claro / Oscuro)" type="button">
         <!-- Icono Sol (Modo Claro) -->
@@ -137,6 +146,22 @@
       <div class="canvas-wrapper">
         <svg id="topology-svg"></svg>
 
+        <!-- Leyenda Visual estilo Cisco Packet Tracer -->
+        <div class="pt-legend-bar" id="pt-legend-bar">
+          <div class="pt-legend-group">
+            <span class="pt-legend-item" title="Puerto encendido y enlace consistente">
+              <span class="pt-tri-dot up"></span> Puerto Up
+            </span>
+            <span class="pt-legend-item" title="Enlace activo pero con falla L2/L3 (ej. falta Trunk o VLAN)">
+              <span class="pt-tri-dot warn"></span> Conflicto L2/L3
+            </span>
+            <span class="pt-legend-item" title="Interfaz apagada (shutdown) o enlace caído">
+              <span class="pt-tri-dot down"></span> Apagado (Down)
+            </span>
+          </div>
+          <span class="pt-legend-tip">Clic en equipo: Inspeccionar · Arrastrar: Mover · Rueda: Zoom · Shift+Arrastrar: Desplazar</span>
+        </div>
+
         <!-- Barra de Herramientas del Lienzo (Zoom / Reset) -->
         <div class="canvas-toolbar">
           <button id="btn-zoom-in" class="canvas-tool-btn" title="Acercar (+)" type="button">
@@ -165,12 +190,17 @@
               <span>Dispositivo:</span>
               <span id="inspect-device-name">Router1</span>
             </div>
-            <button id="btn-close-inspect" class="btn-close-inspect" title="Cerrar" type="button">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
+            <div class="inspect-actions">
+              <button id="btn-inspect-open-cli" class="btn-inspect-cli" title="Abrir consola CLI de este equipo" type="button" style="display: none;">
+                &gt;_ Abrir CLI
+              </button>
+              <button id="btn-close-inspect" class="btn-close-inspect" title="Cerrar" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
           <table class="inspect-table">
             <thead>
@@ -383,6 +413,50 @@ Press ENTER to get prompt. Type 'enable', 'conf t', 'int Fa0/1', 'switchport mod
     </div>
   </div>
 
-  <script type="module" src="/static/js/app.js?v=2.4"></script>
+  <!-- Modal Guía Rápida de Uso -->
+  <div id="modal-help" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Guía Rápida — Cómo usar NetTutorIA</h3>
+        <button id="btn-close-help" class="btn-close-inspect" title="Cerrar guía" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="help-steps-list">
+        <div class="help-step">
+          <span class="help-step-num">1</span>
+          <div>
+            <strong>Carga tu práctica:</strong> Elige un laboratorio del selector superior, sube un archivo <code>.pkt</code> / <code>.pka</code> de Cisco Packet Tracer o pega un <code>show running-config</code>.
+          </div>
+        </div>
+        <div class="help-step">
+          <span class="help-step-num">2</span>
+          <div>
+            <strong>Interpreta los símbolos (como en Packet Tracer):</strong> Los triángulos en los cables indican el estado del puerto (<span style="color:#16A34A;font-weight:600;">Verde = Up</span>, <span style="color:#D97706;font-weight:600;">Ámbar = Conflicto L2/L3</span>, <span style="color:#DC2626;font-weight:600;">Rojo = Shutdown</span>). Haz clic en cualquier equipo para ver sus interfaces o abrir su CLI.
+          </div>
+        </div>
+        <div class="help-step">
+          <span class="help-step-num">3</span>
+          <div>
+            <strong>Diagnostica y aprende:</strong> Revisa la pestaña <em>Diagnóstico</em> para ver las fallas detectadas y pulsa <em>Consultar pista socrática</em> para recibir pistas paso a paso (N1 Conceptual → N2 Clave → N3 Solución).
+          </div>
+        </div>
+        <div class="help-step">
+          <span class="help-step-num">4</span>
+          <div>
+            <strong>Corrige y prueba en vivo:</strong> En <em>Simulador &amp; CLI</em> puedes ejecutar comandos Cisco IOS (<code>conf t</code>, <code>int Fa0/1</code>, <code>switchport mode trunk</code>, <code>no shut</code>) y validar la conectividad con el simulador de <strong>Ping</strong>.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-ok-help" class="btn btn-primary" type="button">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/js/app.js?v=3.0"></script>
 </body>
 </html>

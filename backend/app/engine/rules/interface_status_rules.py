@@ -42,13 +42,18 @@ def check_interface_status_rules(topology: Topology) -> List[DiagnosticFinding]:
                     )
                 )
 
-    # 2. Interfaz física base de Router apagada teniendo subinterfaces
+    # 2. Interfaz física base de Router apagada teniendo subinterfaces (evitando duplicados)
     for dev in topology.devices:
         subinterfaces = [i for i in dev.interfaces if "." in i.name]
+        checked_bases = set()
         for sub_if in subinterfaces:
             base_name = sub_if.name.split(".")[0]
+            if base_name in checked_bases:
+                continue
+            checked_bases.add(base_name)
             base_if = next((i for i in dev.interfaces if i.name == base_name), None)
             if base_if and base_if.status == InterfaceStatus.ADMIN_DOWN:
+                affected_subs = [s.name for s in subinterfaces if s.name.split(".")[0] == base_name]
                 findings.append(
                     DiagnosticFinding(
                         id=f"parent_if_down_{dev.id}_{base_name.replace('/', '_')}",
@@ -61,7 +66,7 @@ def check_interface_status_rules(topology: Topology) -> List[DiagnosticFinding]:
                         title=f"Interfaz física base {base_name} apagada en {dev.name}",
                         description=(
                             f"La interfaz física base {base_name} está en 'shutdown'. "
-                            f"Sus subinterfaces lógicas (ej: {sub_if.name}) no podrán cursar tráfico hasta levantar la física."
+                            f"Sus subinterfaces lógicas ({', '.join(affected_subs)}) no podrán cursar tráfico hasta levantar la física."
                         ),
                         hint_level1="Si la interfaz física principal está apagada, ¿pueden funcionar sus subinterfaces virtuales asociadas?",
                         hint_level2=f"Asegúrate de ejecutar 'no shutdown' sobre {base_name} (la interfaz física padre), no solo en las subinterfaces.",

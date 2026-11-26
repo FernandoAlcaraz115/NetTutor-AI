@@ -41,6 +41,11 @@ export class TutorChat {
     });
   }
 
+  resetContext() {
+    this.selectedFinding = null;
+    this.chatHistory = [];
+  }
+
   setSelectedFinding(finding) {
     this.selectedFinding = finding;
     this.addSystemMessage(`Enfocando tutoría en: <strong>${this.escapeHtml(finding.title)}</strong> (${this.escapeHtml(finding.device_name)})`);
@@ -140,18 +145,39 @@ export class TutorChat {
   }
 
   renderMarkdown(text) {
-    let html = this.escapeHtml(text);
+    if (!text) return '';
+    // Normalizar saltos de línea Windows y Unix
+    let normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-    // Bloques de código ```cisco ... ```
-    html = html.replace(/```(?:cisco|bash|plaintext)?\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    // 1. Extraer bloques de código multilínea (```cisco ... ```) antes de escapar párrafos
+    const codeBlocks = [];
+    normalized = normalized.replace(/```(?:cisco|bash|plaintext|sh|json)?\n?([\s\S]*?)```/g, (match, code) => {
+      const token = `___PRE_CODE_BLOCK_${codeBlocks.length}___`;
+      codeBlocks.push(code.trim());
+      return token;
+    });
+
+    // 2. Escapar HTML del texto general
+    let html = this.escapeHtml(normalized);
+
+    // 3. Formato Markdown inline
     // Código en línea
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     // Negrita
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     // Cursiva
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    // Saltos de línea
+    // Saltos de línea en texto
     html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+
+    // 4. Reinsertar bloques de código limpios y coloreables
+    codeBlocks.forEach((code, idx) => {
+      const safeCode = this.escapeHtml(code);
+      html = html.replace(
+        `___PRE_CODE_BLOCK_${idx}___`,
+        `<pre class="chat-code-block"><code>${safeCode}</code></pre>`
+      );
+    });
 
     return html;
   }
